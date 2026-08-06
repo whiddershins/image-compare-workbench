@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ImageAsset, Workspace } from '../../src/domain/model';
+import type { ImageAsset, SizeNormalization, Workspace } from '../../src/domain/model';
 import {
   appendAssets,
   emptyWorkspace,
@@ -42,76 +42,92 @@ function workspaceWithPair(a: ImageAsset, b: ImageAsset): Workspace {
   return sb.value;
 }
 
-describe('size normalization', () => {
+function withNorm(w: Workspace, norm: SizeNormalization): Workspace {
+  return setSizeNormalization(w, norm);
+}
+
+describe('size normalization (orthogonal basis × reference)', () => {
   const small = asset('small', 768, 1376, 0);
-  const large = asset('large', 2304, 4096, 1); // 3× linear scale of small if same aspect... 
-  // 2304/768=3, 4096/1376≈2.976 — nearly same composition
+  const large = asset('large', 2304, 4096, 1);
 
-  it('native keeps scale 1 for both', () => {
-    const w = setSizeNormalization(
-      workspaceWithPair(small, large),
-      'native',
-    );
+  it('native keeps scale 1 for both regardless of reference', () => {
+    const w = withNorm(workspaceWithPair(small, large), {
+      basis: 'native',
+      reference: 'a',
+    });
     const pair = pairContext(w);
-    expect(imageWorldScale(small, 'native', pair)).toBe(1);
-    expect(imageWorldScale(large, 'native', pair)).toBe(1);
+    expect(imageWorldScale(small, w.sizeNormalization, pair)).toBe(1);
+    expect(imageWorldScale(large, w.sizeNormalization, pair)).toBe(1);
   });
 
-  it('equal-height makes world heights match', () => {
-    const w = setSizeNormalization(
-      workspaceWithPair(small, large),
-      'equal-height',
-    );
+  it('height × pair makes world heights match', () => {
+    const w = withNorm(workspaceWithPair(small, large), {
+      basis: 'height',
+      reference: 'pair',
+    });
     const pair = pairContext(w);
-    const sSmall = imageWorldScale(small, 'equal-height', pair);
-    const sLarge = imageWorldScale(large, 'equal-height', pair);
+    const sSmall = imageWorldScale(small, w.sizeNormalization, pair);
+    const sLarge = imageWorldScale(large, w.sizeNormalization, pair);
     expect(small.height * sSmall).toBeCloseTo(large.height * sLarge);
-    expect(small.height * sSmall).toBeCloseTo(Math.max(small.height, large.height));
+    expect(small.height * sSmall).toBeCloseTo(
+      Math.max(small.height, large.height),
+    );
   });
 
-  it('equal-width makes world widths match', () => {
-    const w = setSizeNormalization(
-      workspaceWithPair(small, large),
-      'equal-width',
-    );
+  it('width × pair makes world widths match', () => {
+    const w = withNorm(workspaceWithPair(small, large), {
+      basis: 'width',
+      reference: 'pair',
+    });
     const pair = pairContext(w);
-    const sSmall = imageWorldScale(small, 'equal-width', pair);
-    const sLarge = imageWorldScale(large, 'equal-width', pair);
+    const sSmall = imageWorldScale(small, w.sizeNormalization, pair);
+    const sLarge = imageWorldScale(large, w.sizeNormalization, pair);
     expect(small.width * sSmall).toBeCloseTo(large.width * sLarge);
   });
 
-  it('equal-max-edge matches longer edges', () => {
-    const w = setSizeNormalization(
-      workspaceWithPair(small, large),
-      'equal-max-edge',
-    );
+  it('max-edge × pair matches longer edges', () => {
+    const w = withNorm(workspaceWithPair(small, large), {
+      basis: 'max-edge',
+      reference: 'pair',
+    });
     const pair = pairContext(w);
-    const sSmall = imageWorldScale(small, 'equal-max-edge', pair);
-    const sLarge = imageWorldScale(large, 'equal-max-edge', pair);
+    const sSmall = imageWorldScale(small, w.sizeNormalization, pair);
+    const sLarge = imageWorldScale(large, w.sizeNormalization, pair);
     const eSmall = Math.max(small.width, small.height) * sSmall;
     const eLarge = Math.max(large.width, large.height) * sLarge;
     expect(eSmall).toBeCloseTo(eLarge);
   });
 
-  it('match-a keeps A native and scales B to A height', () => {
-    const w = setSizeNormalization(
-      workspaceWithPair(small, large),
-      'match-a',
-    );
+  it('height × lock A keeps A native and scales B to A height', () => {
+    const w = withNorm(workspaceWithPair(small, large), {
+      basis: 'height',
+      reference: 'a',
+    });
     const pair = pairContext(w);
-    expect(imageWorldScale(small, 'match-a', pair)).toBe(1);
-    const sB = imageWorldScale(large, 'match-a', pair);
+    expect(imageWorldScale(small, w.sizeNormalization, pair)).toBe(1);
+    const sB = imageWorldScale(large, w.sizeNormalization, pair);
     expect(large.height * sB).toBeCloseTo(small.height);
   });
 
-  it('match-b keeps B native and scales A to B height', () => {
-    const w = setSizeNormalization(
-      workspaceWithPair(small, large),
-      'match-b',
-    );
+  it('width × lock A scales B to A width', () => {
+    const w = withNorm(workspaceWithPair(small, large), {
+      basis: 'width',
+      reference: 'a',
+    });
     const pair = pairContext(w);
-    expect(imageWorldScale(large, 'match-b', pair)).toBe(1);
-    const sA = imageWorldScale(small, 'match-b', pair);
+    expect(imageWorldScale(small, w.sizeNormalization, pair)).toBe(1);
+    const sB = imageWorldScale(large, w.sizeNormalization, pair);
+    expect(large.width * sB).toBeCloseTo(small.width);
+  });
+
+  it('height × lock B keeps B native and scales A to B height', () => {
+    const w = withNorm(workspaceWithPair(small, large), {
+      basis: 'height',
+      reference: 'b',
+    });
+    const pair = pairContext(w);
+    expect(imageWorldScale(large, w.sizeNormalization, pair)).toBe(1);
+    const sA = imageWorldScale(small, w.sizeNormalization, pair);
     expect(small.height * sA).toBeCloseTo(large.height);
   });
 
@@ -129,10 +145,16 @@ describe('size normalization', () => {
     };
     const cam = w.camera;
     const wipe = w.comparison;
-    const next = setSizeNormalization(w, 'equal-height');
+    const next = setSizeNormalization(w, {
+      basis: 'height',
+      reference: 'pair',
+    });
     expect(next.camera).toBe(cam);
     expect(next.comparison).toBe(wipe);
-    expect(next.sizeNormalization).toBe('equal-height');
+    expect(next.sizeNormalization).toEqual({
+      basis: 'height',
+      reference: 'pair',
+    });
   });
 
   it('placed bounds use world scale', () => {
@@ -142,27 +164,28 @@ describe('size normalization', () => {
     expect(b.bottom - b.top).toBeCloseTo(small.height * scale);
   });
 
-  it('selectedPairBounds respects normalization for fit', () => {
-    const w = setSizeNormalization(
-      workspaceWithPair(small, large),
-      'equal-height',
-    );
+  it('selectedPairBounds respects height × pair for fit', () => {
+    const w = withNorm(workspaceWithPair(small, large), {
+      basis: 'height',
+      reference: 'pair',
+    });
     const bounds = selectedPairBounds(w);
     expect(bounds).not.toBeNull();
-    // After equal-height, both heights equal max → union height is that max
     expect(bounds!.bottom - bounds!.top).toBeCloseTo(
       Math.max(small.height, large.height),
     );
   });
 
-  it('same aspect overlay: match-a makes world sizes nearly equal', () => {
-    // Exact 2× variant
+  it('same aspect: height × lock A makes world sizes equal', () => {
     const a = asset('a', 100, 200, 0);
     const b = asset('b', 200, 400, 1);
-    const w = setSizeNormalization(workspaceWithPair(a, b), 'match-a');
+    const w = withNorm(workspaceWithPair(a, b), {
+      basis: 'height',
+      reference: 'a',
+    });
     const pair = pairContext(w);
-    const sA = imageWorldScale(a, 'match-a', pair);
-    const sB = imageWorldScale(b, 'match-a', pair);
+    const sA = imageWorldScale(a, w.sizeNormalization, pair);
+    const sB = imageWorldScale(b, w.sizeNormalization, pair);
     expect(a.width * sA).toBeCloseTo(b.width * sB);
     expect(a.height * sA).toBeCloseTo(b.height * sB);
   });

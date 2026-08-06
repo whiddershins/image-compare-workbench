@@ -1,14 +1,22 @@
 <script lang="ts">
   import type {
-    SizeNormalizationMode,
+    SizeNormBasis,
+    SizeNormReference,
     ViewportSize,
     Workspace,
   } from '../../domain/model';
-  import { SIZE_NORMALIZATION_MODES } from '../../domain/model';
+  import {
+    SIZE_NORM_BASES,
+    SIZE_NORM_REFERENCES,
+  } from '../../domain/model';
   import { zoomPercent } from '../../domain/camera';
   import {
-    sizeNormalizationDescription,
-    sizeNormalizationLabel,
+    sizeNormBasisDescription,
+    sizeNormBasisLabel,
+    sizeNormReferenceDescription,
+    sizeNormReferenceLabel,
+    withSizeNormBasis,
+    withSizeNormReference,
   } from '../../domain/sizeNormalization';
   import {
     wipeLockDescription,
@@ -36,17 +44,29 @@
 
   const pct = $derived(zoomPercent(workspace.camera));
   const canFolder = supportsDirectoryPicker() || supportsWebkitDirectory();
-  const sizeMode = $derived(workspace.sizeNormalization);
+  const sizeNorm = $derived(workspace.sizeNormalization);
   const wipeLock = $derived(workspace.comparison.lock);
+  const refDisabled = $derived(sizeNorm.basis === 'native');
 
   function fit() {
     controller.fit(viewport);
   }
 
-  function onSizeModeChange(e: Event) {
-    const value = (e.currentTarget as HTMLSelectElement)
-      .value as SizeNormalizationMode;
-    controller.setSizeNormalization(value, viewport);
+  function onBasisChange(e: Event) {
+    const basis = (e.currentTarget as HTMLSelectElement).value as SizeNormBasis;
+    controller.setSizeNormalization(
+      withSizeNormBasis(sizeNorm, basis),
+      viewport,
+    );
+  }
+
+  function onReferenceChange(e: Event) {
+    const reference = (e.currentTarget as HTMLSelectElement)
+      .value as SizeNormReference;
+    controller.setSizeNormalization(
+      withSizeNormReference(sizeNorm, reference),
+      viewport,
+    );
   }
 
   function toggleWipeLock() {
@@ -149,19 +169,44 @@
       class="btn"
       onclick={() => controller.swap()}
       data-testid="swap-btn"
+      title="Swap A and B (S)"
+      aria-label="Swap A and B"
     >
-      Swap
+      ⇄ Swap
     </button>
-    <label class="size-mode" title={sizeNormalizationDescription(sizeMode)}>
-      <span class="sr-only">Size normalization</span>
+    <label
+      class="size-mode"
+      title={sizeNormBasisDescription(sizeNorm.basis)}
+    >
+      <span class="sr-only">Size basis</span>
       <select
-        data-testid="size-normalization"
-        aria-label="Size normalization"
-        value={sizeMode}
-        onchange={onSizeModeChange}
+        data-testid="size-norm-basis"
+        aria-label="Size basis"
+        value={sizeNorm.basis}
+        onchange={onBasisChange}
       >
-        {#each SIZE_NORMALIZATION_MODES as mode}
-          <option value={mode}>{sizeNormalizationLabel(mode)}</option>
+        {#each SIZE_NORM_BASES as basis}
+          <option value={basis}>{sizeNormBasisLabel(basis)}</option>
+        {/each}
+      </select>
+    </label>
+    <label
+      class="size-mode"
+      class:disabled={refDisabled}
+      title={refDisabled
+        ? 'Reference is unused when size basis is Native px'
+        : sizeNormReferenceDescription(sizeNorm.reference)}
+    >
+      <span class="sr-only">Size reference</span>
+      <select
+        data-testid="size-norm-reference"
+        aria-label="Size reference"
+        value={sizeNorm.reference}
+        disabled={refDisabled}
+        onchange={onReferenceChange}
+      >
+        {#each SIZE_NORM_REFERENCES as ref}
+          <option value={ref}>{sizeNormReferenceLabel(ref)}</option>
         {/each}
       </select>
     </label>
@@ -265,12 +310,18 @@
     font: inherit;
     font-size: 12px;
     padding: 4px 6px;
-    max-width: 132px;
+    max-width: 110px;
     cursor: pointer;
   }
 
-  .size-mode select:hover {
+  .size-mode select:hover:not(:disabled) {
     border-color: var(--border-strong);
+  }
+
+  .size-mode.disabled select,
+  .size-mode select:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
   }
 
   .sr-only {

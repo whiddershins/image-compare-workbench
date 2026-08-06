@@ -43,10 +43,16 @@
       </dl>
       <h3>Size normalization</h3>
       <p class="note">
-        Toolbar control scales each side into shared world space (aspect preserved).
-        Use <strong>Match A</strong> or <strong>Equal height</strong> when the same
-        composition was exported at different resolutions so they can overlay.
-        Selection still does not move the camera; changing the mode refits the pair.
+        Two orthogonal controls: <strong>basis</strong> (native / height / width /
+        max edge) and <strong>reference</strong> (both-max / lock A / lock B).
+        Lock A keeps A native and scales B to the chosen dimension — good when
+        cycling B. Changing size refits the pair; selection does not move the camera.
+      </p>
+      <h3>Rails</h3>
+      <p class="note">
+        An image already selected on the other side appears muted (50%). Click it
+        to <strong>swap A and B</strong>. Toolbar <strong>⇄ Swap</strong> does the
+        same (shortcut S).
       </p>
       <h3>Wipe lock</h3>
       <p class="note">

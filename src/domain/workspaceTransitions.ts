@@ -4,7 +4,7 @@ import {
   type ImageAsset,
   type SelectionError,
   type Side,
-  type SizeNormalizationMode,
+  type SizeNormalization,
   type Workspace,
 } from './model';
 import { err, ok, type Result } from './result';
@@ -165,12 +165,17 @@ export function setWipePosition(
  */
 export function setSizeNormalization(
   workspace: Workspace,
-  mode: SizeNormalizationMode,
+  next: SizeNormalization,
 ): Workspace {
-  if (workspace.sizeNormalization === mode) return workspace;
+  if (
+    workspace.sizeNormalization.basis === next.basis &&
+    workspace.sizeNormalization.reference === next.reference
+  ) {
+    return workspace;
+  }
   return {
     ...workspace,
-    sizeNormalization: mode,
+    sizeNormalization: next,
   };
 }
 

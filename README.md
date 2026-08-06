@@ -71,15 +71,28 @@ Folder import was designed for Chromium-style directory APIs. Ordinary multi-fil
 
 ## Size normalization
 
-Different resolutions of the same composition will not overlay in **Native px** mode (true pixel sizes). Use the toolbar control:
+Two **orthogonal** toolbar controls (aspect always preserved; not full registration):
 
-| Mode | Behavior |
-|------|----------|
-| Native px | 1 world unit = 1 source pixel |
-| Equal height / width / max edge | Scale both sides so that dimension matches |
-| Match A / Match B | Reference side stays native; the other scales to its height |
+**Basis** — what to equalize:
 
-Aspect ratio is always preserved (no stretch). This is size normalization only — not manual alignment or registration.
+| Basis | Behavior |
+|-------|----------|
+| Native px | 1 world unit = 1 source pixel (reference ignored) |
+| Height / Width / Max edge | Equalize that dimension in world space |
+
+**Reference** — who owns the target size:
+
+| Reference | Behavior |
+|-----------|----------|
+| Both (max) | Both sides scale to the larger of A and B |
+| Lock A | A stays native; B scales to A |
+| Lock B | B stays native; A scales to B |
+
+Example: **Height + Lock A** = old “Match A”. **Height + Both (max)** = old “Equal height”.
+
+## Rails
+
+If an image is selected as A, it appears **muted on the B rail** (and vice versa). Click the muted thumb to **swap A↔B**. Toolbar **⇄ Swap** / key `S` still available.
 
 ## Wipe lock
 

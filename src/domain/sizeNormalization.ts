@@ -1,7 +1,9 @@
 import type {
   Bounds,
   ImageAsset,
-  SizeNormalizationMode,
+  SizeNormBasis,
+  SizeNormalization,
+  SizeNormReference,
   Workspace,
 } from './model';
 import { imageBounds } from './geometry';
@@ -22,78 +24,75 @@ export function pairContext(workspace: Workspace): PairContext {
 /**
  * Uniform scale from source pixels → world units for one asset in the pair.
  * Always preserves aspect ratio.
+ *
+ * Controls are orthogonal:
+ * - basis: which dimension to equalize (or native)
+ * - reference: pair-symmetric max, or lock to A / B native
  */
 export function imageWorldScale(
   asset: ImageAsset,
-  mode: SizeNormalizationMode,
+  norm: SizeNormalization,
   pair: PairContext,
 ): number {
-  if (mode === 'native') return 1;
+  if (norm.basis === 'native') return 1;
 
   const { a, b } = pair;
 
-  if (mode === 'match-a') {
+  if (norm.reference === 'a') {
     if (!a) return 1;
     if (asset.id === a.id) return 1;
-    return scaleToMatchReference(asset, a);
+    return scaleToMatchReference(asset, a, norm.basis);
   }
 
-  if (mode === 'match-b') {
+  if (norm.reference === 'b') {
     if (!b) return 1;
     if (asset.id === b.id) return 1;
-    return scaleToMatchReference(asset, b);
+    return scaleToMatchReference(asset, b, norm.basis);
   }
 
-  // Pair-equal modes need both sides when possible
-  const dims = dimensionsForMode(mode, a, b);
-  if (!dims) return 1;
-  return scaleToTarget(asset, mode, dims.target);
+  // pair: both sides share max of the chosen basis dimension
+  const target = pairTarget(norm.basis, a, b);
+  if (target == null) return 1;
+  return scaleToTarget(asset, norm.basis, target);
 }
 
-/**
- * Match reference by height when both are portrait-ish, else by max edge.
- * Using height for typical gen/compare stacks keeps vertical features aligned;
- * for very different aspects we still only use a uniform scale (no stretch).
- */
+function measure(asset: ImageAsset, basis: Exclude<SizeNormBasis, 'native'>): number {
+  if (basis === 'height') return asset.height;
+  if (basis === 'width') return asset.width;
+  return Math.max(asset.width, asset.height);
+}
+
 function scaleToMatchReference(
   asset: ImageAsset,
   reference: ImageAsset,
+  basis: Exclude<SizeNormBasis, 'native'>,
 ): number {
-  if (asset.height <= 0 || reference.height <= 0) return 1;
-  // Prefer height match — same-composition res variants usually share aspect
-  return reference.height / asset.height;
+  const ref = measure(reference, basis);
+  const self = measure(asset, basis);
+  if (ref <= 0 || self <= 0) return 1;
+  return ref / self;
 }
 
-function dimensionsForMode(
-  mode: 'equal-height' | 'equal-width' | 'equal-max-edge',
+function pairTarget(
+  basis: Exclude<SizeNormBasis, 'native'>,
   a: ImageAsset | null,
   b: ImageAsset | null,
-): { target: number } | null {
+): number | null {
   const values: number[] = [];
-  for (const asset of [a, b]) {
-    if (!asset) continue;
-    if (mode === 'equal-height') values.push(asset.height);
-    else if (mode === 'equal-width') values.push(asset.width);
-    else values.push(Math.max(asset.width, asset.height));
-  }
+  if (a) values.push(measure(a, basis));
+  if (b) values.push(measure(b, basis));
   if (values.length === 0) return null;
-  return { target: Math.max(...values) };
+  return Math.max(...values);
 }
 
 function scaleToTarget(
   asset: ImageAsset,
-  mode: 'equal-height' | 'equal-width' | 'equal-max-edge',
+  basis: Exclude<SizeNormBasis, 'native'>,
   target: number,
 ): number {
   if (target <= 0) return 1;
-  if (mode === 'equal-height') {
-    return asset.height > 0 ? target / asset.height : 1;
-  }
-  if (mode === 'equal-width') {
-    return asset.width > 0 ? target / asset.width : 1;
-  }
-  const edge = Math.max(asset.width, asset.height);
-  return edge > 0 ? target / edge : 1;
+  const self = measure(asset, basis);
+  return self > 0 ? target / self : 1;
 }
 
 export function placedWorldSize(
@@ -122,38 +121,67 @@ export function assetWorldScaleInWorkspace(
   );
 }
 
-export function sizeNormalizationLabel(mode: SizeNormalizationMode): string {
-  switch (mode) {
+export function sizeNormBasisLabel(basis: SizeNormBasis): string {
+  switch (basis) {
     case 'native':
       return 'Native px';
-    case 'equal-height':
-      return 'Equal height';
-    case 'equal-width':
-      return 'Equal width';
-    case 'equal-max-edge':
-      return 'Equal max edge';
-    case 'match-a':
-      return 'Match A';
-    case 'match-b':
-      return 'Match B';
+    case 'height':
+      return 'Height';
+    case 'width':
+      return 'Width';
+    case 'max-edge':
+      return 'Max edge';
   }
 }
 
-export function sizeNormalizationDescription(
-  mode: SizeNormalizationMode,
-): string {
-  switch (mode) {
-    case 'native':
-      return 'True pixel sizes. Different resolutions will not overlay.';
-    case 'equal-height':
-      return 'Scale both so heights match (larger height wins). Good for same-composition stacks.';
-    case 'equal-width':
-      return 'Scale both so widths match.';
-    case 'equal-max-edge':
-      return 'Scale both so the longer edge matches.';
-    case 'match-a':
-      return 'Keep A at native size; scale B to A’s height. A stays put while cycling B.';
-    case 'match-b':
-      return 'Keep B at native size; scale A to B’s height.';
+export function sizeNormReferenceLabel(ref: SizeNormReference): string {
+  switch (ref) {
+    case 'pair':
+      return 'Both (max)';
+    case 'a':
+      return 'Lock A';
+    case 'b':
+      return 'Lock B';
   }
+}
+
+export function sizeNormBasisDescription(basis: SizeNormBasis): string {
+  switch (basis) {
+    case 'native':
+      return 'True pixel sizes. Different resolutions will not overlay. Reference is ignored.';
+    case 'height':
+      return 'Equalize image heights in world space (aspect preserved).';
+    case 'width':
+      return 'Equalize image widths in world space (aspect preserved).';
+    case 'max-edge':
+      return 'Equalize the longer edge in world space (aspect preserved).';
+  }
+}
+
+export function sizeNormReferenceDescription(ref: SizeNormReference): string {
+  switch (ref) {
+    case 'pair':
+      return 'Both sides scale so the chosen dimension equals the larger of A and B.';
+    case 'a':
+      return 'A stays native; B scales to match A on the chosen dimension.';
+    case 'b':
+      return 'B stays native; A scales to match B on the chosen dimension.';
+  }
+}
+
+export function withSizeNormBasis(
+  current: SizeNormalization,
+  basis: SizeNormBasis,
+): SizeNormalization {
+  if (basis === 'native') {
+    return { basis, reference: current.reference };
+  }
+  return { basis, reference: current.reference };
+}
+
+export function withSizeNormReference(
+  current: SizeNormalization,
+  reference: SizeNormReference,
+): SizeNormalization {
+  return { basis: current.basis, reference };
 }

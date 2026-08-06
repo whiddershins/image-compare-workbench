@@ -2,7 +2,7 @@ import type {
   AssetId,
   ImportIssue,
   Side,
-  SizeNormalizationMode,
+  SizeNormalization,
   ViewportSize,
   WipeLock,
   Workspace,
@@ -295,10 +295,10 @@ export class WorkspaceController {
    * placement is visible (recommended after an explicit mode change).
    */
   setSizeNormalization(
-    mode: SizeNormalizationMode,
+    norm: SizeNormalization,
     viewport?: ViewportSize,
   ): void {
-    let next = setSizeNormalization(this.workspace, mode);
+    let next = setSizeNormalization(this.workspace, norm);
     if (
       viewport &&
       viewport.width > 0 &&

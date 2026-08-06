@@ -6,32 +6,51 @@
     asset: ImageAsset;
     side: Side;
     selected: boolean;
+    /** Selected on the opposite rail — muted; click swaps A↔B */
+    crossSelected: boolean;
     thumbnailUrl: string | null;
   }
 
-  let { asset, side, selected, thumbnailUrl }: Props = $props();
+  let { asset, side, selected, crossSelected, thumbnailUrl }: Props = $props();
 
   function onClick() {
+    if (crossSelected) {
+      controller.swap();
+      return;
+    }
     controller.select(side, asset.id);
   }
 
   function onKeydown(e: KeyboardEvent) {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      controller.select(side, asset.id);
+      onClick();
     }
   }
+
+  const otherLabel = $derived(side === 'a' ? 'B' : 'A');
+  const ariaLabel = $derived(
+    crossSelected
+      ? `${asset.relativePath} — selected as ${otherLabel}; click to swap A and B`
+      : `${asset.relativePath}, ${asset.width}×${asset.height}`,
+  );
+  const title = $derived(
+    crossSelected
+      ? `${asset.relativePath}\nSelected as ${otherLabel} — click to swap`
+      : asset.relativePath,
+  );
 </script>
 
 <button
   type="button"
   class="thumb"
   class:selected
+  class:cross-selected={crossSelected}
   data-asset-id={asset.id}
   data-side={side}
   aria-pressed={selected}
-  aria-label={`${asset.relativePath}, ${asset.width}×${asset.height}`}
-  title={asset.relativePath}
+  aria-label={ariaLabel}
+  {title}
   onclick={onClick}
   onkeydown={onKeydown}
 >
@@ -43,6 +62,8 @@
     {/if}
     {#if selected}
       <span class="badge" aria-hidden="true">{side.toUpperCase()}</span>
+    {:else if crossSelected}
+      <span class="badge swap-badge" aria-hidden="true" title="Swap A and B">⇄</span>
     {/if}
   </div>
   <span class="name">{asset.name}</span>
@@ -70,6 +91,22 @@
   .thumb.selected {
     background: var(--selected);
     border-color: var(--selected-border);
+  }
+
+  /* Opposite side already has this image — look disabled; click swaps */
+  .thumb.cross-selected {
+    opacity: 0.5;
+  }
+
+  .thumb.cross-selected:hover {
+    opacity: 0.85;
+    background: #1c2026;
+    border-color: var(--border-strong);
+  }
+
+  .thumb.cross-selected:hover .swap-badge {
+    background: var(--accent);
+    color: #0b0d10;
   }
 
   .frame {
@@ -108,6 +145,14 @@
     padding: 1px 4px;
     border-radius: 2px;
     line-height: 1.2;
+  }
+
+  .swap-badge {
+    background: var(--border-strong);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 1px 5px;
   }
 
   .name {

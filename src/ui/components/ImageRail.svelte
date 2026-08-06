@@ -16,6 +16,8 @@
 
   const assets = $derived(workspace.imageSet.assets);
   const selectedId = $derived(workspace.selection[side]);
+  const otherSide = $derived(side === 'a' ? 'b' : 'a');
+  const otherSelectedId = $derived(workspace.selection[otherSide]);
   const isActive = $derived(workspace.selection.activeSide === side);
   const label = $derived(side === 'a' ? 'A' : 'B');
 
@@ -62,6 +64,7 @@
         {asset}
         {side}
         selected={selectedId === asset.id}
+        crossSelected={otherSelectedId === asset.id && selectedId !== asset.id}
         thumbnailUrl={thumbUrl(asset)}
       />
     {/each}

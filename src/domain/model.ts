@@ -63,31 +63,42 @@ export type ComparisonState = {
 export const DEFAULT_WIPE_LOCK: WipeLock = 'world';
 
 /**
- * How each selected image is scaled into shared world space.
- * Camera still applies on top. Aspect ratio is always preserved.
- *
- * - native: 1 world unit = 1 source pixel (true sizes)
- * - equal-height / equal-width / equal-max-edge: both sides share that dimension
- * - match-a / match-b: reference side stays native; the other is scaled to match it
+ * What dimension is equalized into world space (orthogonal to reference).
+ * - native: 1 world unit = 1 source pixel; reference is ignored
+ * - height | width | max-edge: uniform scale so that dimension matches
  */
-export type SizeNormalizationMode =
-  | 'native'
-  | 'equal-height'
-  | 'equal-width'
-  | 'equal-max-edge'
-  | 'match-a'
-  | 'match-b';
+export type SizeNormBasis = 'native' | 'height' | 'width' | 'max-edge';
 
-export const SIZE_NORMALIZATION_MODES: readonly SizeNormalizationMode[] = [
+/**
+ * Who owns the target size (orthogonal to basis).
+ * - pair: both sides scale so the basis dimension equals max(A, B)
+ * - a: A stays native; B scales to match A’s basis dimension
+ * - b: B stays native; A scales to match B’s basis dimension
+ */
+export type SizeNormReference = 'pair' | 'a' | 'b';
+
+export interface SizeNormalization {
+  readonly basis: SizeNormBasis;
+  readonly reference: SizeNormReference;
+}
+
+export const SIZE_NORM_BASES: readonly SizeNormBasis[] = [
   'native',
-  'equal-height',
-  'equal-width',
-  'equal-max-edge',
-  'match-a',
-  'match-b',
+  'height',
+  'width',
+  'max-edge',
 ] as const;
 
-export const DEFAULT_SIZE_NORMALIZATION: SizeNormalizationMode = 'native';
+export const SIZE_NORM_REFERENCES: readonly SizeNormReference[] = [
+  'pair',
+  'a',
+  'b',
+] as const;
+
+export const DEFAULT_SIZE_NORMALIZATION: SizeNormalization = {
+  basis: 'native',
+  reference: 'pair',
+};
 
 export interface Workspace {
   readonly imageSet: ImageSet;
@@ -96,10 +107,9 @@ export interface Workspace {
   readonly comparison: ComparisonState;
   /**
    * Per-image placement into world space for the current A/B pair.
-   * Does not alter camera when selection changes; changing the mode itself
-   * is an explicit command (UI may refit after).
+   * Basis and reference are orthogonal controls.
    */
-  readonly sizeNormalization: SizeNormalizationMode;
+  readonly sizeNormalization: SizeNormalization;
 }
 
 export type ImportIssue =
