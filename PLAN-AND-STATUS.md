@@ -190,6 +190,27 @@ Worth adding if tightening v0:
 - [ ] Confirm `dist/` not committed (gitignored) — currently ignored
 - [ ] Optional: remove empty sibling experiment dir `../checkitout` if unused (outside this repo)
 
+### P4 — Viewport pointer / drag-selection UX (undecided)
+
+**Symptom:** Easy to fall into browser drag-selection over the comparison area (blue selection wash). Hard to exit; pan/wipe feel stuck. Not an intentional app mode.
+
+**Likely causes:** free left-drag pan collides with native selection; incomplete `user-select` / `selectstart` / image-drag suppression; no Escape-to-clear.
+
+**Options (product owner undecided):**
+
+1. Keep free left-drag pan + fully suppress selection (`user-select: none`, clear selection on pointerdown, Escape clears).
+2. Space / middle-button only for pan (stricter).
+3. Both free pan + Space pan with full selection suppression.
+
+**Do not “fix” casually without choosing a model.** Note for a future pass; not blocking deploy.
+
+### P5 — Wipe lock (implemented 2026-08-06)
+
+- **Default:** `world` — wipe tracks fixed world X through pan/zoom (same place on images).
+- **Toggle:** `viewport` — wipe fixed in screen space (original v0).
+- Toolbar button: **Wipe img** / **Wipe scr**.
+- Domain: `src/domain/wipe.ts`; `ComparisonState.lock` + `worldX`.
+
 ### Out of scope for v0 (do not implement casually)
 
 Rotatable wipe, fade, blink, difference modes, alignment/registration, masks, SAM, annotations, export, persistence, accounts, cloud, analytics, video, EXR/RAW/HEIC/SVG, backend, plugin framework.
@@ -337,3 +358,4 @@ When you land deploy or QA, append a short **Changelog** subsection below rather
 
 - **2026-08-06** — v0 implemented, tests green, private GitHub created, Cloudflare not yet deployed. This plan/status doc added.
 - **2026-08-06** — **Size normalization modes** added (post-v0): toolbar control for `native` | `equal-height` | `equal-width` | `equal-max-edge` | `match-a` | `match-b`. Per-image uniform scale into shared world space so same-composition different-resolution frames can overlay. Domain: `src/domain/sizeNormalization.ts`; mode on `Workspace.sizeNormalization`. Changing mode refits pair; selection still does not move camera. Not full registration/alignment.
+- **2026-08-06** — **Wipe lock** default `world` (image-fixed through zoom/pan); toggle to `viewport` (screen-fixed). Follow-on noted for browser drag-selection UX (P4, undecided).

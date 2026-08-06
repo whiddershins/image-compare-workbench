@@ -11,6 +11,10 @@
     sizeNormalizationLabel,
   } from '../../domain/sizeNormalization';
   import {
+    wipeLockDescription,
+    wipeLockLabel,
+  } from '../../domain/wipe';
+  import {
     enumerateFromFileList,
     pickDirectoryFiles,
     supportsDirectoryPicker,
@@ -33,6 +37,7 @@
   const pct = $derived(zoomPercent(workspace.camera));
   const canFolder = supportsDirectoryPicker() || supportsWebkitDirectory();
   const sizeMode = $derived(workspace.sizeNormalization);
+  const wipeLock = $derived(workspace.comparison.lock);
 
   function fit() {
     controller.fit(viewport);
@@ -42,6 +47,11 @@
     const value = (e.currentTarget as HTMLSelectElement)
       .value as SizeNormalizationMode;
     controller.setSizeNormalization(value, viewport);
+  }
+
+  function toggleWipeLock() {
+    const next = wipeLock === 'world' ? 'viewport' : 'world';
+    controller.setWipeLock(next, viewport);
   }
 
   async function onFilesSelected(e: Event) {
@@ -155,6 +165,18 @@
         {/each}
       </select>
     </label>
+    <button
+      type="button"
+      class="btn"
+      class:active-toggle={wipeLock === 'world'}
+      data-testid="wipe-lock-btn"
+      title={wipeLockDescription(wipeLock)}
+      aria-pressed={wipeLock === 'world'}
+      aria-label={wipeLockLabel(wipeLock)}
+      onclick={toggleWipeLock}
+    >
+      {wipeLock === 'world' ? 'Wipe img' : 'Wipe scr'}
+    </button>
     <span class="zoom-pct" data-testid="zoom-pct" aria-live="polite"
       >{pct}%</span
     >
@@ -220,6 +242,11 @@
   .btn.danger {
     color: #e0a0a0;
     border-color: #4a3030;
+  }
+
+  .btn.active-toggle {
+    border-color: var(--accent-dim);
+    color: var(--accent);
   }
 
   .zoom-pct {

@@ -120,7 +120,12 @@ describe('size normalization', () => {
     w = {
       ...w,
       camera: { centerX: 10, centerY: -4, scale: 2 },
-      comparison: { kind: 'wipe', position: 0.33 },
+      comparison: {
+        kind: 'wipe',
+        lock: 'world',
+        position: 0.33,
+        worldX: 0,
+      },
     };
     const cam = w.camera;
     const wipe = w.comparison;

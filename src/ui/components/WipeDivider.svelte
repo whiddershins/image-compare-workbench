@@ -1,12 +1,14 @@
 <script lang="ts">
+  import type { ViewportSize } from '../../domain/model';
   import { controller } from '../stores/workspaceStore';
 
   interface Props {
     position: number;
     viewportWidth: number;
+    viewport: ViewportSize;
   }
 
-  let { position, viewportWidth }: Props = $props();
+  let { position, viewportWidth, viewport }: Props = $props();
 
   const SMALL_STEP = 0.01;
   const LARGE_STEP = 0.05;
@@ -14,6 +16,10 @@
   function positionFromClientX(clientX: number, rect: DOMRect): number {
     if (rect.width <= 0) return position;
     return (clientX - rect.left) / rect.width;
+  }
+
+  function applyWipe(pos: number) {
+    controller.setWipe(pos, viewport);
   }
 
   function onPointerDown(e: PointerEvent) {
@@ -24,10 +30,10 @@
     const host = target.closest('.viewport') as HTMLElement | null;
     if (!host) return;
     const rect = host.getBoundingClientRect();
-    controller.setWipe(positionFromClientX(e.clientX, rect));
+    applyWipe(positionFromClientX(e.clientX, rect));
 
     function onMove(ev: PointerEvent) {
-      controller.setWipe(positionFromClientX(ev.clientX, rect));
+      applyWipe(positionFromClientX(ev.clientX, rect));
     }
     function onUp(ev: PointerEvent) {
       target.releasePointerCapture(ev.pointerId);
@@ -61,7 +67,7 @@
     }
     e.preventDefault();
     e.stopPropagation();
-    controller.setWipe(next);
+    applyWipe(next);
   }
 
   const leftPx = $derived(position * viewportWidth);

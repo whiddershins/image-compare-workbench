@@ -1,0 +1,111 @@
+import { describe, expect, it } from 'vitest';
+import type { Workspace } from '../../src/domain/model';
+import {
+  displayWipePosition,
+  setWipeFromViewportPosition,
+  setWipeLock,
+  defaultComparison,
+} from '../../src/domain/wipe';
+import { emptyWorkspace } from '../../src/domain/workspaceTransitions';
+import { zoomAtScreenPoint } from '../../src/domain/geometry';
+
+function workspaceWithCamera(): Workspace {
+  return {
+    ...emptyWorkspace(),
+    camera: { centerX: 0, centerY: 0, scale: 1 },
+    comparison: {
+      kind: 'wipe',
+      lock: 'world',
+      position: 0.5,
+      worldX: 0,
+    },
+  };
+}
+
+const viewport = { width: 200, height: 100 };
+
+describe('wipe lock', () => {
+  it('defaults to world lock at center', () => {
+    const c = defaultComparison();
+    expect(c.lock).toBe('world');
+    expect(c.position).toBe(0.5);
+    expect(c.worldX).toBe(0);
+  });
+
+  it('world lock: zoom preserves worldX; display position changes', () => {
+    let w = workspaceWithCamera();
+    // Place wipe at world X = 20 via viewport drag at x=120 when scale=1 center=0
+    // screenX = vw/2 + (worldX - centerX) * scale => 100 + 20 = 120 => pos 0.6
+    w = setWipeFromViewportPosition(w, 0.6, viewport);
+    expect(w.comparison.worldX).toBeCloseTo(20);
+
+    const beforeDisplay = displayWipePosition(
+      w.comparison,
+      w.camera,
+      viewport,
+    );
+    expect(beforeDisplay).toBeCloseTo(0.6);
+
+    // Zoom 2× about viewport center — world X under wipe should stay 20
+    const zoomedCam = zoomAtScreenPoint(
+      w.camera!,
+      viewport,
+      { x: 100, y: 50 },
+      2,
+    );
+    w = { ...w, camera: zoomedCam };
+
+    expect(w.comparison.worldX).toBeCloseTo(20);
+    const afterDisplay = displayWipePosition(
+      w.comparison,
+      w.camera,
+      viewport,
+    );
+    // screenX = 100 + (20 - 0) * 2 = 140 => 0.7
+    expect(afterDisplay).toBeCloseTo(0.7);
+    expect(afterDisplay).not.toBeCloseTo(beforeDisplay);
+  });
+
+  it('viewport lock: zoom preserves display position', () => {
+    let w = workspaceWithCamera();
+    w = setWipeFromViewportPosition(w, 0.6, viewport);
+    w = setWipeLock(w, 'viewport', viewport);
+    expect(w.comparison.lock).toBe('viewport');
+    expect(w.comparison.position).toBeCloseTo(0.6);
+
+    const zoomedCam = zoomAtScreenPoint(
+      w.camera!,
+      viewport,
+      { x: 100, y: 50 },
+      2,
+    );
+    w = { ...w, camera: zoomedCam };
+
+    const display = displayWipePosition(w.comparison, w.camera, viewport);
+    expect(display).toBeCloseTo(0.6);
+  });
+
+  it('switching lock preserves on-screen wipe', () => {
+    let w = workspaceWithCamera();
+    w = setWipeFromViewportPosition(w, 0.25, viewport);
+    const before = displayWipePosition(w.comparison, w.camera, viewport);
+
+    w = setWipeLock(w, 'viewport', viewport);
+    expect(displayWipePosition(w.comparison, w.camera, viewport)).toBeCloseTo(
+      before,
+    );
+
+    w = setWipeLock(w, 'world', viewport);
+    expect(displayWipePosition(w.comparison, w.camera, viewport)).toBeCloseTo(
+      before,
+    );
+  });
+
+  it('setWipeFromViewportPosition clamps', () => {
+    let w = workspaceWithCamera();
+    w = setWipeFromViewportPosition(w, -1, viewport);
+    expect(w.comparison.position).toBe(0);
+    w = setWipeFromViewportPosition(w, 2, viewport);
+    expect(w.comparison.position).toBe(1);
+  });
+});

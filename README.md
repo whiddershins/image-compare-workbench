@@ -81,6 +81,15 @@ Different resolutions of the same composition will not overlay in **Native px** 
 
 Aspect ratio is always preserved (no stretch). This is size normalization only — not manual alignment or registration.
 
+## Wipe lock
+
+| Mode | Toolbar | Behavior |
+|------|---------|----------|
+| Image (default) | **Wipe img** | Divider stays on the same world/image X through pan and zoom |
+| Screen | **Wipe scr** | Divider stays fixed in the viewport; content slides under it |
+
+Original v0 was screen-fixed only; image-locked is now the default for inspection.
+
 ## Keyboard
 
 | Key | Action |

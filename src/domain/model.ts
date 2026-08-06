@@ -38,15 +38,29 @@ export interface CameraState {
   readonly scale: number;
 }
 
+/**
+ * Where the wipe plane is anchored.
+ * - world: fixed world X (same place on the images through pan/zoom) — default
+ * - viewport: fixed screen fraction (original v0; content slides under the line)
+ */
+export type WipeLock = 'world' | 'viewport';
+
 export type ComparisonState = {
   readonly kind: 'wipe';
+  readonly lock: WipeLock;
   /**
-   * Normalized viewport X coordinate.
-   * 0 means all B.
-   * 1 means all A.
+   * Normalized viewport X coordinate (0 = all B, 1 = all A).
+   * Authoritative when lock is 'viewport'. When lock is 'world', this is a
+   * cache of the last drag position; display is derived from worldX + camera.
    */
   readonly position: number;
+  /**
+   * World-space X of the wipe plane. Authoritative when lock is 'world'.
+   */
+  readonly worldX: number;
 };
+
+export const DEFAULT_WIPE_LOCK: WipeLock = 'world';
 
 /**
  * How each selected image is scaled into shared world space.

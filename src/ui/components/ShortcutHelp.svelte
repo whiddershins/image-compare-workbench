@@ -48,6 +48,13 @@
         composition was exported at different resolutions so they can overlay.
         Selection still does not move the camera; changing the mode refits the pair.
       </p>
+      <h3>Wipe lock</h3>
+      <p class="note">
+        <strong>Wipe img</strong> (default): the divider tracks a fixed place on the
+        images through pan and zoom.
+        <strong>Wipe scr</strong>: the divider stays fixed in the viewport (content
+        slides under it). Toggle on the toolbar.
+      </p>
     </div>
   </div>
 {/if}

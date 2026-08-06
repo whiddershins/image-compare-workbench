@@ -4,6 +4,7 @@ import type {
   Side,
   SizeNormalizationMode,
   ViewportSize,
+  WipeLock,
   Workspace,
 } from '../domain/model';
 import { emptyWorkspace, isEmpty } from '../domain/workspaceTransitions';
@@ -14,9 +15,9 @@ import {
   selectAsset,
   setActiveSide,
   setSizeNormalization,
-  setWipePosition,
   swapSelections,
 } from '../domain/workspaceTransitions';
+import { setWipeFromViewportPosition, setWipeLock } from '../domain/wipe';
 import {
   fitCurrentPair,
   panWorkspace,
@@ -274,8 +275,19 @@ export class WorkspaceController {
     this.syncSelectionLoads();
   }
 
-  setWipe(position: number): void {
-    this.setWorkspace(setWipePosition(this.workspace, position));
+  /**
+   * Set wipe from a viewport-normalized position (0–1).
+   * Updates both screen cache and worldX when camera+viewport are known.
+   */
+  setWipe(position: number, viewport?: ViewportSize): void {
+    const vp =
+      viewport ??
+      ({ width: 0, height: 0 } satisfies ViewportSize);
+    this.setWorkspace(setWipeFromViewportPosition(this.workspace, position, vp));
+  }
+
+  setWipeLock(lock: WipeLock, viewport: ViewportSize): void {
+    this.setWorkspace(setWipeLock(this.workspace, lock, viewport));
   }
 
   /**

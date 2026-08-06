@@ -144,7 +144,12 @@ describe('selection', () => {
     w = {
       ...w,
       camera: { centerX: 5, centerY: 6, scale: 2 },
-      comparison: { kind: 'wipe', position: 0.3 },
+      comparison: {
+        kind: 'wipe',
+        lock: 'world',
+        position: 0.3,
+        worldX: 0,
+      },
     };
     const cameraBefore = w.camera;
     const wipeBefore = w.comparison;
@@ -163,7 +168,12 @@ describe('selection', () => {
     w = {
       ...w,
       camera: { centerX: 1, centerY: 2, scale: 0.5 },
-      comparison: { kind: 'wipe', position: 0.7 },
+      comparison: {
+        kind: 'wipe',
+        lock: 'world',
+        position: 0.7,
+        worldX: 0,
+      },
     };
     const cameraBefore = w.camera;
     const wipeBefore = w.comparison;

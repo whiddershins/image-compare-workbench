@@ -2,6 +2,7 @@
   import type { Workspace } from '../../domain/model';
   import { getAsset } from '../../domain/workspaceTransitions';
   import { assetWorldScaleInWorkspace } from '../../domain/sizeNormalization';
+  import { displayWipePosition } from '../../domain/wipe';
   import { controller } from '../stores/workspaceStore';
   import ComparisonScene from './ComparisonScene.svelte';
   import WipeDivider from './WipeDivider.svelte';
@@ -20,7 +21,10 @@
   let cursor = $derived(panning ? 'grabbing' : spaceHeld ? 'grab' : 'default');
 
   const camera = $derived(workspace.camera);
-  const wipe = $derived(workspace.comparison.position);
+  /** On-screen wipe fraction (world-lock derives from camera each frame). */
+  const wipe = $derived(
+    displayWipePosition(workspace.comparison, workspace.camera, viewport),
+  );
   const assetA = $derived(getAsset(workspace, workspace.selection.a));
   const assetB = $derived(getAsset(workspace, workspace.selection.b));
   const scaleA = $derived(
@@ -186,7 +190,11 @@
       />
     </div>
 
-    <WipeDivider position={wipe} viewportWidth={viewport.width} />
+    <WipeDivider
+      position={wipe}
+      viewportWidth={viewport.width}
+      {viewport}
+    />
 
     <div class="labels" aria-hidden="true">
       <span class="label-a" data-testid="label-a"

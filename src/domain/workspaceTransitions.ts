@@ -1,6 +1,5 @@
 import {
   DEFAULT_SIZE_NORMALIZATION,
-  DEFAULT_WIPE,
   type AssetId,
   type ImageAsset,
   type SelectionError,
@@ -10,13 +9,14 @@ import {
 } from './model';
 import { err, ok, type Result } from './result';
 import { sortAssets } from './sorting';
+import { defaultComparison } from './wipe';
 
 export function emptyWorkspace(): Workspace {
   return {
     imageSet: { assets: [] },
     selection: { a: null, b: null, activeSide: 'b' },
     camera: null,
-    comparison: { kind: 'wipe', position: DEFAULT_WIPE },
+    comparison: defaultComparison(),
     sizeNormalization: DEFAULT_SIZE_NORMALIZATION,
   };
 }
@@ -61,7 +61,7 @@ export function appendAssets(
       activeSide: 'b',
     },
     camera: null,
-    comparison: { kind: 'wipe', position: DEFAULT_WIPE },
+    comparison: defaultComparison(),
   };
 }
 
@@ -139,6 +139,11 @@ export function swapSelections(workspace: Workspace): Workspace {
   };
 }
 
+/**
+ * Set wipe by viewport fraction without camera context.
+ * Prefer setWipeFromViewportPosition when viewport+camera are available
+ * so worldX stays in sync.
+ */
 export function setWipePosition(
   workspace: Workspace,
   position: number,
@@ -147,6 +152,7 @@ export function setWipePosition(
   return {
     ...workspace,
     comparison: {
+      ...workspace.comparison,
       kind: 'wipe',
       position: clamped,
     },
