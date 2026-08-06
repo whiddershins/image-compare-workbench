@@ -48,11 +48,44 @@ export type ComparisonState = {
   readonly position: number;
 };
 
+/**
+ * How each selected image is scaled into shared world space.
+ * Camera still applies on top. Aspect ratio is always preserved.
+ *
+ * - native: 1 world unit = 1 source pixel (true sizes)
+ * - equal-height / equal-width / equal-max-edge: both sides share that dimension
+ * - match-a / match-b: reference side stays native; the other is scaled to match it
+ */
+export type SizeNormalizationMode =
+  | 'native'
+  | 'equal-height'
+  | 'equal-width'
+  | 'equal-max-edge'
+  | 'match-a'
+  | 'match-b';
+
+export const SIZE_NORMALIZATION_MODES: readonly SizeNormalizationMode[] = [
+  'native',
+  'equal-height',
+  'equal-width',
+  'equal-max-edge',
+  'match-a',
+  'match-b',
+] as const;
+
+export const DEFAULT_SIZE_NORMALIZATION: SizeNormalizationMode = 'native';
+
 export interface Workspace {
   readonly imageSet: ImageSet;
   readonly selection: SelectionState;
   readonly camera: CameraState | null;
   readonly comparison: ComparisonState;
+  /**
+   * Per-image placement into world space for the current A/B pair.
+   * Does not alter camera when selection changes; changing the mode itself
+   * is an explicit command (UI may refit after).
+   */
+  readonly sizeNormalization: SizeNormalizationMode;
 }
 
 export type ImportIssue =

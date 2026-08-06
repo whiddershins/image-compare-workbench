@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Workspace } from '../../domain/model';
   import { getAsset } from '../../domain/workspaceTransitions';
+  import { assetWorldScaleInWorkspace } from '../../domain/sizeNormalization';
   import { controller } from '../stores/workspaceStore';
   import ComparisonScene from './ComparisonScene.svelte';
   import WipeDivider from './WipeDivider.svelte';
@@ -22,6 +23,12 @@
   const wipe = $derived(workspace.comparison.position);
   const assetA = $derived(getAsset(workspace, workspace.selection.a));
   const assetB = $derived(getAsset(workspace, workspace.selection.b));
+  const scaleA = $derived(
+    assetA ? assetWorldScaleInWorkspace(workspace, assetA) : 1,
+  );
+  const scaleB = $derived(
+    assetB ? assetWorldScaleInWorkspace(workspace, assetB) : 1,
+  );
 
   const loadA = $derived.by(() => {
     void selectionLoadVersion;
@@ -155,6 +162,7 @@
       imageUrl={sideB.url}
       {camera}
       {viewport}
+      worldScale={scaleB}
       loading={sideB.loading}
       error={sideB.error}
       label="B"
@@ -171,6 +179,7 @@
         imageUrl={sideA.url}
         {camera}
         {viewport}
+        worldScale={scaleA}
         loading={sideA.loading}
         error={sideA.error}
         label="A"

@@ -1,9 +1,11 @@
 import {
+  DEFAULT_SIZE_NORMALIZATION,
   DEFAULT_WIPE,
   type AssetId,
   type ImageAsset,
   type SelectionError,
   type Side,
+  type SizeNormalizationMode,
   type Workspace,
 } from './model';
 import { err, ok, type Result } from './result';
@@ -15,6 +17,7 @@ export function emptyWorkspace(): Workspace {
     selection: { a: null, b: null, activeSide: 'b' },
     camera: null,
     comparison: { kind: 'wipe', position: DEFAULT_WIPE },
+    sizeNormalization: DEFAULT_SIZE_NORMALIZATION,
   };
 }
 
@@ -147,6 +150,21 @@ export function setWipePosition(
       kind: 'wipe',
       position: clamped,
     },
+  };
+}
+
+/**
+ * Change size normalization. Does not modify camera, wipe, or selection.
+ * Callers may optionally run Fit afterward.
+ */
+export function setSizeNormalization(
+  workspace: Workspace,
+  mode: SizeNormalizationMode,
+): Workspace {
+  if (workspace.sizeNormalization === mode) return workspace;
+  return {
+    ...workspace,
+    sizeNormalization: mode,
   };
 }
 

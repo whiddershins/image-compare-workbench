@@ -41,6 +41,13 @@
         <div><dt>?</dt><dd>This help</dd></div>
         <div><dt>Wipe ← →</dt><dd>Adjust wipe when focused</dd></div>
       </dl>
+      <h3>Size normalization</h3>
+      <p class="note">
+        Toolbar control scales each side into shared world space (aspect preserved).
+        Use <strong>Match A</strong> or <strong>Equal height</strong> when the same
+        composition was exported at different resolutions so they can overlay.
+        Selection still does not move the camera; changing the mode refits the pair.
+      </p>
     </div>
   </div>
 {/if}
@@ -108,5 +115,19 @@
   dd {
     margin: 0;
     color: var(--text-muted);
+  }
+
+  h3 {
+    margin: 16px 0 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .note {
+    margin: 0;
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.45;
   }
 </style>

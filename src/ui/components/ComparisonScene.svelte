@@ -7,6 +7,8 @@
     imageUrl: string | null;
     camera: CameraState;
     viewport: ViewportSize;
+    /** Source pixels → world units (size normalization). Default 1 = native. */
+    worldScale?: number;
     loading?: boolean;
     error?: string | null;
     label: string;
@@ -17,14 +19,17 @@
     imageUrl,
     camera,
     viewport,
+    worldScale = 1,
     loading = false,
     error = null,
     label,
   }: Props = $props();
 
   const transform = $derived(cameraCssTransform(camera, viewport));
-  const w = $derived(asset?.width ?? 0);
-  const h = $derived(asset?.height ?? 0);
+  const srcW = $derived(asset?.width ?? 0);
+  const srcH = $derived(asset?.height ?? 0);
+  const worldW = $derived(srcW * worldScale);
+  const worldH = $derived(srcH * worldScale);
 </script>
 
 <div class="scene" class:loading aria-label={`Side ${label}`}>
@@ -32,18 +37,19 @@
     <div class="world" style:transform style:transform-origin="0 0">
       <div
         class="image-plane"
-        style:width="{w}px"
-        style:height="{h}px"
-        style:left="{-w / 2}px"
-        style:top="{-h / 2}px"
+        style:width="{worldW}px"
+        style:height="{worldH}px"
+        style:left="{-worldW / 2}px"
+        style:top="{-worldH / 2}px"
+        data-world-scale={worldScale}
       >
         <div class="checker" aria-hidden="true"></div>
         <img
           src={imageUrl}
           alt=""
           draggable="false"
-          width={w}
-          height={h}
+          width={srcW}
+          height={srcH}
           data-side={label.toLowerCase()}
         />
       </div>

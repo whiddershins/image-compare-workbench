@@ -3,13 +3,11 @@ import {
   FIT_PADDING,
   type Bounds,
   type CameraState,
-  type ImageAsset,
   type ViewportSize,
   type Workspace,
 } from './model';
 import {
   fitBounds,
-  imageBounds,
   setScalePreserveCenter,
   unionBounds,
   zoomAboutCenter,
@@ -17,19 +15,33 @@ import {
   panByScreenDelta,
 } from './geometry';
 import type { Point } from './model';
+import {
+  assetWorldScaleInWorkspace,
+  placedBounds,
+} from './sizeNormalization';
+import { getAsset } from './workspaceTransitions';
 
+/**
+ * Union of selected A/B world bounds after size normalization.
+ */
 export function selectedPairBounds(workspace: Workspace): Bounds | null {
-  const { a, b } = workspace.selection;
-  const assets = workspace.imageSet.assets;
-  const assetA = a ? assets.find((x) => x.id === a) : undefined;
-  const assetB = b ? assets.find((x) => x.id === b) : undefined;
+  const assetA = getAsset(workspace, workspace.selection.a);
+  const assetB = getAsset(workspace, workspace.selection.b);
   if (!assetA && !assetB) return null;
-  if (assetA && !assetB) return imageBounds(assetA.width, assetA.height);
-  if (!assetA && assetB) return imageBounds(assetB.width, assetB.height);
-  return unionBounds(
-    imageBounds(assetA!.width, assetA!.height),
-    imageBounds(assetB!.width, assetB!.height),
-  );
+
+  const boundsList: Bounds[] = [];
+  if (assetA) {
+    boundsList.push(
+      placedBounds(assetA, assetWorldScaleInWorkspace(workspace, assetA)),
+    );
+  }
+  if (assetB) {
+    boundsList.push(
+      placedBounds(assetB, assetWorldScaleInWorkspace(workspace, assetB)),
+    );
+  }
+  if (boundsList.length === 1) return boundsList[0]!;
+  return unionBounds(boundsList[0]!, boundsList[1]!);
 }
 
 export function fitCurrentPair(

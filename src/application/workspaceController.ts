@@ -2,6 +2,7 @@ import type {
   AssetId,
   ImportIssue,
   Side,
+  SizeNormalizationMode,
   ViewportSize,
   Workspace,
 } from '../domain/model';
@@ -12,6 +13,7 @@ import {
   cycleSelection,
   selectAsset,
   setActiveSide,
+  setSizeNormalization,
   setWipePosition,
   swapSelections,
 } from '../domain/workspaceTransitions';
@@ -274,6 +276,26 @@ export class WorkspaceController {
 
   setWipe(position: number): void {
     this.setWorkspace(setWipePosition(this.workspace, position));
+  }
+
+  /**
+   * Change size normalization. Optionally refit the pair so the new
+   * placement is visible (recommended after an explicit mode change).
+   */
+  setSizeNormalization(
+    mode: SizeNormalizationMode,
+    viewport?: ViewportSize,
+  ): void {
+    let next = setSizeNormalization(this.workspace, mode);
+    if (
+      viewport &&
+      viewport.width > 0 &&
+      viewport.height > 0 &&
+      next.imageSet.assets.length > 0
+    ) {
+      next = fitCurrentPair(next, viewport);
+    }
+    this.setWorkspace(next);
   }
 
   fit(viewport: ViewportSize): void {

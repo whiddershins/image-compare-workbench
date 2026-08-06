@@ -69,6 +69,18 @@ Folder import was designed for Chromium-style directory APIs. Ordinary multi-fil
 - **Shared world camera** — one world unit = one source pixel; images centered at origin; one transform applied to both sides.
 - **Latest-selection-wins** — per-side request tokens ignore stale decode completions during rapid cycling.
 
+## Size normalization
+
+Different resolutions of the same composition will not overlay in **Native px** mode (true pixel sizes). Use the toolbar control:
+
+| Mode | Behavior |
+|------|----------|
+| Native px | 1 world unit = 1 source pixel |
+| Equal height / width / max edge | Scale both sides so that dimension matches |
+| Match A / Match B | Reference side stays native; the other scales to its height |
+
+Aspect ratio is always preserved (no stretch). This is size normalization only — not manual alignment or registration.
+
 ## Keyboard
 
 | Key | Action |
