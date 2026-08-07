@@ -54,20 +54,23 @@ export type WipeLock = 'world' | 'viewport';
 export type WipeAxis = 'vertical' | 'horizontal';
 
 /**
- * Sticky presentation (domain).
- * - wipe: A/B wipe composite (default)
- * - a: full A only
- * - b: full B only
+ * Two orthogonal sticky axes for the main view:
+ * - presentation: wipe composite vs solo full frame
+ * - focus: which side is "home" when full, and drives A tap / B tap
  *
- * Toolbar: Full A|B toggles a↔b on re-press; Wipe is mutually exclusive.
- * Momentary "A tap" / "B tap" is session UI (not stored): hold shows the
- * other full side, release restores this sticky mode.
+ * Switching Wipe ↔ Full must not change focus, so side-tap stays stable.
+ * Re-pressing Full flips focus a↔b. Momentary side-tap is session UI only.
  */
-export type ViewMode = 'wipe' | 'a' | 'b';
+export type ViewPresentation = 'wipe' | 'full';
+export type ViewFocus = 'a' | 'b';
+
+/** What the viewport draws (sticky or after side-tap overlay). */
+export type DrawnView = 'wipe' | 'a' | 'b';
 
 export type ComparisonState = {
   readonly kind: 'wipe';
-  readonly viewMode: ViewMode;
+  readonly presentation: ViewPresentation;
+  readonly focus: ViewFocus;
   readonly axis: WipeAxis;
   readonly lock: WipeLock;
   /**
@@ -88,7 +91,8 @@ export type ComparisonState = {
 
 export const DEFAULT_WIPE_LOCK: WipeLock = 'world';
 export const DEFAULT_WIPE_AXIS: WipeAxis = 'vertical';
-export const DEFAULT_VIEW_MODE: ViewMode = 'wipe';
+export const DEFAULT_VIEW_PRESENTATION: ViewPresentation = 'wipe';
+export const DEFAULT_VIEW_FOCUS: ViewFocus = 'a';
 
 /**
  * What dimension is equalized into world space (orthogonal to reference).

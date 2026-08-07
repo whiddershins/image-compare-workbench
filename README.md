@@ -111,11 +111,18 @@ If an image is selected as A, it appears **muted on the B rail** (and vice versa
 
 ## View mode
 
-| Control | Type | Behavior |
-|---------|------|----------|
-| **Full A** / **Full B** | Sticky | First press → full A; press again → full B; again → full A… |
-| **Wipe** | Sticky | A/B wipe composite (default); exclusive with Full |
-| **B tap** / **A tap** | Hold | Shows the *other* full side; release restores sticky mode |
+Two orthogonal sticky axes:
+
+| Axis | Values | Notes |
+|------|--------|--------|
+| **presentation** | Wipe \| Full | Mutually exclusive |
+| **focus** | A \| B | Which full side is “home”; drives side-tap |
+
+| Control | Behavior |
+|---------|----------|
+| **Full A/B** | Enter Full (keeps focus). Re-press flips focus A↔B. |
+| **Wipe** | Presentation only — **does not change focus or A/B tap**. |
+| **B tap** / **A tap** | Hold: show opposite of focus. Label depends on focus only. |
 
 Hold **V** or the tap button. Same camera; wipe geometry unchanged.
 

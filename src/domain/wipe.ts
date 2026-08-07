@@ -1,14 +1,17 @@
 import type {
   CameraState,
   ComparisonState,
+  DrawnView,
   ViewportSize,
-  ViewMode,
+  ViewFocus,
+  ViewPresentation,
   WipeAxis,
   WipeLock,
   Workspace,
 } from './model';
 import {
-  DEFAULT_VIEW_MODE,
+  DEFAULT_VIEW_FOCUS,
+  DEFAULT_VIEW_PRESENTATION,
   DEFAULT_WIPE,
   DEFAULT_WIPE_AXIS,
   DEFAULT_WIPE_LOCK,
@@ -23,7 +26,8 @@ export function clampWipePosition(position: number): number {
 export function defaultComparison(): ComparisonState {
   return {
     kind: 'wipe',
-    viewMode: DEFAULT_VIEW_MODE,
+    presentation: DEFAULT_VIEW_PRESENTATION,
+    focus: DEFAULT_VIEW_FOCUS,
     axis: DEFAULT_WIPE_AXIS,
     lock: DEFAULT_WIPE_LOCK,
     position: DEFAULT_WIPE,
@@ -32,66 +36,102 @@ export function defaultComparison(): ComparisonState {
   };
 }
 
+// ── View state machine (presentation ⟂ focus) ──────────────────────────
+
+/** Solo side shown when presentation is full. */
+export function stickySolo(c: ComparisonState): DrawnView {
+  return c.presentation === 'wipe' ? 'wipe' : c.focus;
+}
+
 /**
- * Sticky view mode. Does not alter wipe position, lock, camera, or selection.
+ * Side-tap hold shows the opposite of focus (independent of wipe/full).
+ * focus a → B tap; focus b → A tap.
  */
-export function setViewMode(
+export function tapTarget(focus: ViewFocus): ViewFocus {
+  return focus === 'b' ? 'a' : 'b';
+}
+
+/** What to draw: sticky view, or opposite focus while side-tapping. */
+export function effectiveView(
+  c: ComparisonState,
+  tapping: boolean,
+): DrawnView {
+  return tapping ? tapTarget(c.focus) : stickySolo(c);
+}
+
+/** Full control: enter full if on wipe; if already full, flip focus a↔b. */
+export function cycleFull(c: ComparisonState): ComparisonState {
+  if (c.presentation === 'wipe') {
+    return { ...c, presentation: 'full' }; // focus unchanged
+  }
+  return {
+    ...c,
+    presentation: 'full',
+    focus: c.focus === 'a' ? 'b' : 'a',
+  };
+}
+
+/** Wipe control: presentation only — never touches focus (or side-tap labels). */
+export function setWipePresentation(c: ComparisonState): ComparisonState {
+  if (c.presentation === 'wipe') return c;
+  return { ...c, presentation: 'wipe' };
+}
+
+export function setPresentation(
   workspace: Workspace,
-  viewMode: ViewMode,
+  presentation: ViewPresentation,
 ): Workspace {
-  if (workspace.comparison.viewMode === viewMode) return workspace;
+  if (workspace.comparison.presentation === presentation) return workspace;
   return {
     ...workspace,
     comparison: {
       ...workspace.comparison,
-      viewMode,
+      presentation,
+      // never rewrite focus here
     },
   };
 }
 
-/** Full control: wipe→a, a→b, b→a */
-export function cycleFullView(mode: ViewMode): ViewMode {
-  return mode === 'a' ? 'b' : 'a';
+export function applyCycleFull(workspace: Workspace): Workspace {
+  return {
+    ...workspace,
+    comparison: cycleFull(workspace.comparison),
+  };
 }
 
-/** Label on the Full segment button */
-export function fullButtonLabel(mode: ViewMode): string {
-  return mode === 'b' ? 'Full B' : 'Full A';
+export function applyWipePresentation(workspace: Workspace): Workspace {
+  return {
+    ...workspace,
+    comparison: setWipePresentation(workspace.comparison),
+  };
 }
 
-/** Momentary hold shows the other solo side (wipe or full A → B; full B → A) */
-export function tapTarget(mode: ViewMode): 'a' | 'b' {
-  return mode === 'b' ? 'a' : 'b';
+export function fullButtonLabel(focus: ViewFocus): string {
+  return focus === 'b' ? 'Full B' : 'Full A';
 }
 
-export function tapButtonLabel(mode: ViewMode): string {
-  return tapTarget(mode) === 'a' ? 'A tap' : 'B tap';
+export function tapButtonLabel(focus: ViewFocus): string {
+  return tapTarget(focus) === 'a' ? 'A tap' : 'B tap';
 }
 
-/** What to draw: sticky mode, or opposite full while side-tap is held */
-export function effectiveView(mode: ViewMode, tapping: boolean): ViewMode {
-  return tapping ? tapTarget(mode) : mode;
-}
-
-export function fullButtonDescription(mode: ViewMode): string {
-  if (mode === 'wipe') {
-    return 'Show full A. Press again to switch to full B.';
+export function fullButtonDescription(c: ComparisonState): string {
+  if (c.presentation === 'wipe') {
+    return `Show full ${c.focus.toUpperCase()} (focus). Press again to flip A/B.`;
   }
-  if (mode === 'a') {
-    return 'Full A (active). Press again for full B.';
-  }
-  return 'Full B (active). Press again for full A.';
+  return c.focus === 'a'
+    ? 'Full A (active). Press again for full B.'
+    : 'Full B (active). Press again for full A.';
 }
 
 export const WIPE_BUTTON_DESCRIPTION =
-  'A/B wipe composite. Mutually exclusive with Full A/B.';
+  'A/B wipe composite. Does not change Full A/B focus or side-tap.';
 
-export function tapButtonDescription(mode: ViewMode): string {
-  const t = tapTarget(mode);
-  const back =
-    mode === 'wipe' ? 'Wipe' : mode === 'a' ? 'Full A' : 'Full B';
-  return `Hold to show full ${t.toUpperCase()}. Release returns to ${back}.`;
+export function tapButtonDescription(focus: ViewFocus): string {
+  const t = tapTarget(focus);
+  return `Hold to show full ${t.toUpperCase()}. Release restores Wipe or Full ${focus.toUpperCase()}.`;
 }
+
+// ── Wipe geometry ──────────────────────────────────────────────────────
 
 /**
  * Viewport-normalized wipe position used for clip-path and the divider.
@@ -230,7 +270,6 @@ export function setWipeAxis(
   let worldX = workspace.comparison.worldX;
   let worldY = workspace.comparison.worldY;
 
-  // Keep current on-screen fraction when flipping axis
   if (camera && viewport.width > 0 && viewport.height > 0) {
     position = displayWipePosition(
       workspace.comparison,

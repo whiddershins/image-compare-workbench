@@ -52,10 +52,11 @@
   const sizeNorm = $derived(workspace.sizeNormalization);
   const wipeLock = $derived(workspace.comparison.lock);
   const wipeAxis = $derived(workspace.comparison.axis);
-  const viewMode = $derived(workspace.comparison.viewMode);
+  const presentation = $derived(workspace.comparison.presentation);
+  const focus = $derived(workspace.comparison.focus);
   const refDisabled = $derived(sizeNorm.basis === 'native');
-  const fullActive = $derived(viewMode !== 'wipe' && !sideTapping);
-  const wipeActive = $derived(viewMode === 'wipe' && !sideTapping);
+  const fullActive = $derived(presentation === 'full' && !sideTapping);
+  const wipeActive = $derived(presentation === 'wipe' && !sideTapping);
 
   function fit() {
     controller.fit(viewport);
@@ -66,7 +67,7 @@
   }
 
   function onWipeClick() {
-    controller.setViewMode('wipe');
+    controller.setWipeView();
   }
 
   function onTapDown(e: PointerEvent) {
@@ -189,10 +190,10 @@
         role="radio"
         aria-checked={fullActive}
         data-testid="view-mode-full"
-        title={fullButtonDescription(viewMode)}
+        title={fullButtonDescription(workspace.comparison)}
         onclick={onFullClick}
       >
-        {fullButtonLabel(viewMode)}
+        {fullButtonLabel(focus)}
       </button>
       <button
         type="button"
@@ -212,8 +213,8 @@
       class="btn"
       class:active-toggle={sideTapping}
       data-testid="side-tap-btn"
-      title={`${tapButtonDescription(viewMode)} (hold V)`}
-      aria-label={`${tapButtonLabel(viewMode)} — hold`}
+      title={`${tapButtonDescription(focus)} (hold V)`}
+      aria-label={`${tapButtonLabel(focus)} — hold`}
       aria-pressed={sideTapping}
       onpointerdown={onTapDown}
       onpointerup={onTapUp}
@@ -221,7 +222,7 @@
       onlostpointercapture={() => controller.endSideTap()}
       oncontextmenu={(e) => e.preventDefault()}
     >
-      {tapButtonLabel(viewMode)}
+      {tapButtonLabel(focus)}
     </button>
     <button
       type="button"

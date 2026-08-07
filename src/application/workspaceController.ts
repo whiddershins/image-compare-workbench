@@ -4,7 +4,7 @@ import type {
   Side,
   SizeNormalization,
   ViewportSize,
-  ViewMode,
+  DrawnView,
   WipeAxis,
   WipeLock,
   Workspace,
@@ -20,9 +20,9 @@ import {
   swapSelections,
 } from '../domain/workspaceTransitions';
 import {
-  cycleFullView,
+  applyCycleFull,
+  applyWipePresentation,
   effectiveView,
-  setViewMode,
   setWipeAxis,
   setWipeFromViewportPosition,
   setWipeLock,
@@ -145,17 +145,14 @@ export class WorkspaceController {
     return this.sideTapping;
   }
 
-  /** Sticky view, or opposite full while A/B tap is held. */
-  getEffectiveView(): ViewMode {
-    return effectiveView(
-      this.workspace.comparison.viewMode,
-      this.sideTapping,
-    );
+  /** Sticky draw (wipe|a|b), or opposite focus while side-tapping. */
+  getEffectiveView(): DrawnView {
+    return effectiveView(this.workspace.comparison, this.sideTapping);
   }
 
-  /** Which solo side the hold-tap shows right now. */
+  /** Which solo side the hold-tap shows (depends on focus only). */
   getTapTarget(): 'a' | 'b' {
-    return tapTarget(this.workspace.comparison.viewMode);
+    return tapTarget(this.workspace.comparison.focus);
   }
 
   beginSideTap(): void {
@@ -170,10 +167,14 @@ export class WorkspaceController {
     this.emitSideTap();
   }
 
-  /** Full A/B control: enter full A from wipe, or flip a↔b. */
+  /** Full control: show full(focus); if already full, flip focus a↔b. */
   cycleFullView(): void {
-    const next = cycleFullView(this.workspace.comparison.viewMode);
-    this.setWorkspace(setViewMode(this.workspace, next));
+    this.setWorkspace(applyCycleFull(this.workspace));
+  }
+
+  /** Wipe control: presentation only — focus (and side-tap) unchanged. */
+  setWipeView(): void {
+    this.setWorkspace(applyWipePresentation(this.workspace));
   }
 
   private emitWorkspace(): void {
@@ -374,11 +375,6 @@ export class WorkspaceController {
 
   setWipeAxis(axis: WipeAxis, viewport: ViewportSize): void {
     this.setWorkspace(setWipeAxis(this.workspace, axis, viewport));
-  }
-
-  setViewMode(mode: ViewMode): void {
-    // Sticky mode only — does not end side-tap; hold still overlays until release.
-    this.setWorkspace(setViewMode(this.workspace, mode));
   }
 
   /**

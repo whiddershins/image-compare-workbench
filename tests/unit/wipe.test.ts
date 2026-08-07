@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import type { Workspace } from '../../src/domain/model';
+import type { ComparisonState, Workspace } from '../../src/domain/model';
 import {
-  cycleFullView,
+  applyCycleFull,
+  applyWipePresentation,
+  cycleFull,
   displayWipePosition,
   effectiveView,
   fullButtonLabel,
   setWipeFromViewportPosition,
   setWipeLock,
   setWipeAxis,
-  setViewMode,
+  stickySolo,
   tapButtonLabel,
   tapTarget,
   defaultComparison,
@@ -22,7 +24,8 @@ function workspaceWithCamera(): Workspace {
     camera: { centerX: 0, centerY: 0, scale: 1 },
     comparison: {
       kind: 'wipe',
-      viewMode: 'wipe',
+      presentation: 'wipe',
+      focus: 'a',
       axis: 'vertical',
       lock: 'world',
       position: 0.5,
@@ -34,55 +37,95 @@ function workspaceWithCamera(): Workspace {
 
 const viewport = { width: 200, height: 100 };
 
+function cmp(
+  partial: Partial<ComparisonState> = {},
+): ComparisonState {
+  return { ...defaultComparison(), ...partial };
+}
+
+describe('view state machine (presentation ⟂ focus)', () => {
+  it('defaults to wipe + focus a (B tap)', () => {
+    const c = defaultComparison();
+    expect(c.presentation).toBe('wipe');
+    expect(c.focus).toBe('a');
+    expect(tapTarget(c.focus)).toBe('b');
+    expect(tapButtonLabel(c.focus)).toBe('B tap');
+    expect(fullButtonLabel(c.focus)).toBe('Full A');
+  });
+
+  it('tapTarget depends only on focus, not presentation', () => {
+    expect(tapTarget('a')).toBe('b');
+    expect(tapTarget('b')).toBe('a');
+    expect(effectiveView(cmp({ presentation: 'wipe', focus: 'a' }), true)).toBe(
+      'b',
+    );
+    expect(effectiveView(cmp({ presentation: 'full', focus: 'a' }), true)).toBe(
+      'b',
+    );
+    expect(effectiveView(cmp({ presentation: 'wipe', focus: 'b' }), true)).toBe(
+      'a',
+    );
+    expect(effectiveView(cmp({ presentation: 'full', focus: 'b' }), true)).toBe(
+      'a',
+    );
+  });
+
+  it('cycleFull: wipe→full keeps focus; full flips focus', () => {
+    expect(cycleFull(cmp({ presentation: 'wipe', focus: 'a' }))).toMatchObject({
+      presentation: 'full',
+      focus: 'a',
+    });
+    expect(cycleFull(cmp({ presentation: 'wipe', focus: 'b' }))).toMatchObject({
+      presentation: 'full',
+      focus: 'b',
+    });
+    expect(cycleFull(cmp({ presentation: 'full', focus: 'a' }))).toMatchObject({
+      presentation: 'full',
+      focus: 'b',
+    });
+    expect(cycleFull(cmp({ presentation: 'full', focus: 'b' }))).toMatchObject({
+      presentation: 'full',
+      focus: 'a',
+    });
+  });
+
+  it('set wipe presentation does not change focus (side-tap stays put)', () => {
+    let w = workspaceWithCamera();
+    w = applyCycleFull(w); // full A
+    w = applyCycleFull(w); // full B, focus b
+    expect(w.comparison.focus).toBe('b');
+    expect(tapButtonLabel(w.comparison.focus)).toBe('A tap');
+
+    w = applyWipePresentation(w);
+    expect(w.comparison.presentation).toBe('wipe');
+    expect(w.comparison.focus).toBe('b');
+    expect(tapButtonLabel(w.comparison.focus)).toBe('A tap');
+    expect(stickySolo(w.comparison)).toBe('wipe');
+    expect(effectiveView(w.comparison, true)).toBe('a');
+  });
+
+  it('stickySolo and effectiveView', () => {
+    expect(stickySolo(cmp({ presentation: 'wipe', focus: 'b' }))).toBe('wipe');
+    expect(stickySolo(cmp({ presentation: 'full', focus: 'b' }))).toBe('b');
+    expect(effectiveView(cmp({ presentation: 'full', focus: 'a' }), false)).toBe(
+      'a',
+    );
+  });
+});
+
 describe('wipe lock', () => {
   it('defaults to vertical world lock at center and wipe view mode', () => {
     const c = defaultComparison();
     expect(c.lock).toBe('world');
     expect(c.axis).toBe('vertical');
-    expect(c.viewMode).toBe('wipe');
+    expect(c.presentation).toBe('wipe');
     expect(c.position).toBe(0.5);
     expect(c.worldX).toBe(0);
     expect(c.worldY).toBe(0);
   });
 
-  it('setViewMode keeps wipe geometry', () => {
-    let w = workspaceWithCamera();
-    w = setWipeFromViewportPosition(w, 0.3, viewport);
-    const cam = w.camera;
-    const pos = w.comparison.position;
-    const worldX = w.comparison.worldX;
-    w = setViewMode(w, 'a');
-    expect(w.comparison.viewMode).toBe('a');
-    expect(w.comparison.position).toBe(pos);
-    expect(w.comparison.worldX).toBe(worldX);
-    expect(w.camera).toBe(cam);
-    w = setViewMode(w, 'wipe');
-    expect(w.comparison.viewMode).toBe('wipe');
-    expect(w.comparison.position).toBe(pos);
-  });
-
-  it('cycleFullView and tapTarget are simple ternaries', () => {
-    expect(cycleFullView('wipe')).toBe('a');
-    expect(cycleFullView('a')).toBe('b');
-    expect(cycleFullView('b')).toBe('a');
-    expect(tapTarget('wipe')).toBe('b');
-    expect(tapTarget('a')).toBe('b');
-    expect(tapTarget('b')).toBe('a');
-    expect(effectiveView('a', false)).toBe('a');
-    expect(effectiveView('a', true)).toBe('b');
-    expect(effectiveView('b', true)).toBe('a');
-    expect(effectiveView('wipe', true)).toBe('b');
-    expect(fullButtonLabel('wipe')).toBe('Full A');
-    expect(fullButtonLabel('a')).toBe('Full A');
-    expect(fullButtonLabel('b')).toBe('Full B');
-    expect(tapButtonLabel('a')).toBe('B tap');
-    expect(tapButtonLabel('b')).toBe('A tap');
-  });
-
   it('world lock: zoom preserves worldX; display position changes', () => {
     let w = workspaceWithCamera();
-    // Place wipe at world X = 20 via viewport drag at x=120 when scale=1 center=0
-    // screenX = vw/2 + (worldX - centerX) * scale => 100 + 20 = 120 => pos 0.6
     w = setWipeFromViewportPosition(w, 0.6, viewport);
     expect(w.comparison.worldX).toBeCloseTo(20);
 
@@ -93,7 +136,6 @@ describe('wipe lock', () => {
     );
     expect(beforeDisplay).toBeCloseTo(0.6);
 
-    // Zoom 2× about viewport center — world X under wipe should stay 20
     const zoomedCam = zoomAtScreenPoint(
       w.camera!,
       viewport,
@@ -108,7 +150,6 @@ describe('wipe lock', () => {
       w.camera,
       viewport,
     );
-    // screenX = 100 + (20 - 0) * 2 = 140 => 0.7
     expect(afterDisplay).toBeCloseTo(0.7);
     expect(afterDisplay).not.toBeCloseTo(beforeDisplay);
   });
@@ -159,7 +200,6 @@ describe('wipe lock', () => {
   it('horizontal world lock preserves worldY across zoom', () => {
     let w = workspaceWithCamera();
     w = setWipeAxis(w, 'horizontal', viewport);
-    // pos 0.6 → screenY = 60; center 0 scale 1 → worldY = 60 - 50 = 10
     w = setWipeFromViewportPosition(w, 0.6, viewport);
     expect(w.comparison.axis).toBe('horizontal');
     expect(w.comparison.worldY).toBeCloseTo(10);
@@ -172,7 +212,6 @@ describe('wipe lock', () => {
     );
     w = { ...w, camera: zoomedCam };
     expect(w.comparison.worldY).toBeCloseTo(10);
-    // screenY = 50 + 10 * 2 = 70 → 0.7
     expect(
       displayWipePosition(w.comparison, w.camera, viewport),
     ).toBeCloseTo(0.7);

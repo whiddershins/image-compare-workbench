@@ -14,7 +14,7 @@
     workspace: Workspace;
     selectionLoadVersion: number;
     spaceHeld: boolean;
-    /** Momentary opposite full while A/B tap is held */
+    /** Momentary opposite-of-focus full while A/B tap is held */
     sideTapping: boolean;
   }
 
@@ -27,10 +27,8 @@
   let cursor = $derived(panning ? 'grabbing' : spaceHeld ? 'grab' : 'default');
 
   const camera = $derived(workspace.camera);
-  /** Sticky wipe|a|b, or opposite full while tapping */
-  const view = $derived(
-    resolveView(workspace.comparison.viewMode, sideTapping),
-  );
+  /** Drawn view from presentation ⟂ focus, or opposite focus while tapping */
+  const view = $derived(resolveView(workspace.comparison, sideTapping));
   const wipeAxis = $derived(workspace.comparison.axis);
   /** On-screen wipe fraction (world-lock derives from camera each frame). */
   const wipe = $derived(

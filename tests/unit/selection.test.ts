@@ -146,7 +146,8 @@ describe('selection', () => {
       camera: { centerX: 5, centerY: 6, scale: 2 },
       comparison: {
         kind: 'wipe',
-        viewMode: 'wipe',
+        presentation: 'wipe',
+        focus: 'a',
         axis: 'vertical',
         lock: 'world',
         position: 0.3,
@@ -173,7 +174,8 @@ describe('selection', () => {
       camera: { centerX: 1, centerY: 2, scale: 0.5 },
       comparison: {
         kind: 'wipe',
-        viewMode: 'wipe',
+        presentation: 'wipe',
+        focus: 'a',
         axis: 'vertical',
         lock: 'world',
         position: 0.7,
