@@ -44,11 +44,11 @@ export function setViewMode(
 export function viewModeLabel(mode: ViewMode): string {
   switch (mode) {
     case 'full-a':
-      return 'A';
+      return 'Full A';
     case 'wipe':
       return 'Wipe';
     case 'full-b':
-      return 'B';
+      return 'Full B';
   }
 }
 

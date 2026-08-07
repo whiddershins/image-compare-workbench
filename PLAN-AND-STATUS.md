@@ -361,7 +361,7 @@ When you land deploy or QA, append a short **Changelog** subsection below rather
 - **2026-08-06** — **Size normalization modes** added (post-v0): toolbar control for `native` | `equal-height` | `equal-width` | `equal-max-edge` | `match-a` | `match-b`. Per-image uniform scale into shared world space so same-composition different-resolution frames can overlay. Domain: `src/domain/sizeNormalization.ts`; mode on `Workspace.sizeNormalization`. Changing mode refits pair; selection still does not move camera. Not full registration/alignment.
 - **2026-08-06** — **Wipe lock** default `world` (image-fixed through zoom/pan); toggle to `viewport` (screen-fixed). Follow-on noted for browser drag-selection UX (P4, undecided).
 - **2026-08-06** — Size norm split into orthogonal **basis × reference**. Cross-rail muted thumbs (opacity 50%) for image selected on the other side; click swaps A/B. Toolbar **⇄ Swap** kept.
-- **2026-08-07** — View mode segment **A | Wipe | B** (full A / wipe / full B). Sticky, mutually exclusive; wipe geometry preserved across mode switches.
+- **2026-08-07** — View mode segment **Full A | Wipe | Full B**. Sticky, mutually exclusive; wipe geometry preserved across mode switches.
 - **2026-08-07** — Added an assets-only Cloudflare Worker POC with project-local Wrangler, SPA fallback,
   local preview, dry-run validation, and deploy scripts. Temporary deploy verified; permanent deploy
   remains pending auth.

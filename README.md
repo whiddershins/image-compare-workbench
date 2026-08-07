@@ -108,13 +108,13 @@ If an image is selected as A, it appears **muted on the B rail** (and vice versa
 
 ## View mode
 
-Toolbar segment **A | Wipe | B** (mutually exclusive):
+Toolbar segment **Full A | Wipe | Full B** (mutually exclusive):
 
 | Mode | Shows |
 |------|--------|
-| **A** | Full side A only |
+| **Full A** | Side A only |
 | **Wipe** | A/B wipe composite (default) |
-| **B** | Full side B only |
+| **Full B** | Side B only |
 
 Same shared camera. Wipe position is preserved while you visit A or B so returning to Wipe is seamless.
 

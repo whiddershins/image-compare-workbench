@@ -333,8 +333,11 @@
     border: none;
     border-radius: 0;
     border-right: 1px solid var(--border);
-    min-width: 36px;
+    min-width: 44px;
+    padding-left: 8px;
+    padding-right: 8px;
     background: var(--bg);
+    white-space: nowrap;
   }
 
   .seg-btn:last-child {
