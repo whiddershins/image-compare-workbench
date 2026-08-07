@@ -70,12 +70,16 @@
   }
 
   function onTapDown(e: PointerEvent) {
+    if (e.button !== 0) return;
     e.preventDefault();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     controller.beginSideTap();
   }
 
   function onTapUp(e: PointerEvent) {
+    // Only end on the primary button release; ignore stray leave/cancel noise
+    // after capture so we don't flicker begin/end.
+    if (e.type === 'pointerup' && e.button !== 0) return;
     try {
       (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
     } catch {
@@ -214,9 +218,7 @@
       onpointerdown={onTapDown}
       onpointerup={onTapUp}
       onpointercancel={onTapUp}
-      onpointerleave={(e) => {
-        if (e.buttons === 0) controller.endSideTap();
-      }}
+      onlostpointercapture={() => controller.endSideTap()}
       oncontextmenu={(e) => e.preventDefault()}
     >
       {tapButtonLabel(viewMode)}

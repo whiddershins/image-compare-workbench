@@ -3,10 +3,10 @@
 **Audience:** humans and coding agents continuing this work (deploy, QA, review, fixups).
 
 **Last updated:** 2026-08-07
-**Branch:** `main` @ `315a18f` with local deploy/review changes
+**Branch:** `main` @ `ef212dd` with local deployment-status documentation changes
 **Local path:** `/Users/burlapcalhoun/git_repos/image-compare-workbench`  
 **GitHub (private):** https://github.com/whiddershins/image-compare-workbench  
-**Permanent Cloudflare Workers URL:** *not deployed yet*
+**Production Cloudflare Workers URL:** https://image-compare-workbench.marshy-runner.workers.dev
 
 This document is the handoff. The product README is for end users; this file is for implementers.
 
@@ -33,7 +33,7 @@ Full original v0 specification lived in the implementing agent’s prompt (Image
 | CI (GitHub Actions) | **Done** | `.github/workflows/ci.yml` |
 | README | **Done** | User-facing |
 | GitHub private remote + push | **Done** | `origin` → whiddershins/image-compare-workbench |
-| Cloudflare Workers POC | **Verified** | Temporary preview smoke-tested; permanent deploy pending auth |
+| Cloudflare Worker | **Deployed** | Persistent personal-account deployment; root + SPA fallback smoke-tested 2026-08-07 |
 | Manual Safari / Firefox | **Not done** | Only Chromium via Playwright |
 | Manual folder-picker / folder-drag | **Not done** | Code present; not verified by hand |
 | Transparent-pixel visual e2e | **Partial** | Compositor implements checkerboard; no pixel assertion in Playwright |
@@ -123,11 +123,13 @@ Transparent A must show A’s checkerboard, not B.
 
 ---
 
-## 5. Open work for other agents
+## 5. Deployment status and open work
 
-### P0 — Cloudflare Workers first deploy
+### P0 — Cloudflare Workers first deploy — complete
 
-**Goal:** Permanent live assets-only Worker from this private GitHub repo.
+**Result:** The temporary POC was claimed into the maintainer's personal Cloudflare account and is
+now a persistent assets-only Worker. This does not add Durable Objects; those remain future AI
+bridge work.
 
 **Settings (normative):**
 
@@ -140,25 +142,22 @@ Transparent A must show A’s checkerboard, not B.
 | Root directory | `/` (repo root) |
 | Env vars | none |
 
-**Suggested steps:**
+**Production URL:** https://image-compare-workbench.marshy-runner.workers.dev
 
-1. Confirm auth: `npx wrangler whoami`, or authenticate with `npx wrangler login`.
+**Update procedure:**
+
+1. For a manual update, authenticate the local machine with `npx wrangler login`.
 2. Validate and deploy the checked-in configuration:
    ```bash
    npm ci
    npm run verify
    npm run deploy
    ```
-   For automatic deploys, connect the repository with Workers Builds using the settings above.
-3. After first deploy, record production URL in this file and README.
-4. Smoke: open URL, import local images, confirm no network POSTs of image bytes (DevTools).
-5. Do **not** create a separate Pages project. Add a Worker handler or Durable Objects only when the
+   Workers Builds can use the same commands when repository automation is configured in Cloudflare.
+3. Smoke: open the production URL, import local images, and confirm no network POSTs of image bytes
+   (DevTools).
+4. Do **not** create a separate Pages project. Add a Worker handler or Durable Objects only when the
    AI bridge has a concrete API contract.
-
-**When done, update:**
-
-- This file: Cloudflare URL + date
-- README Deployment section if the live URL should be listed
 
 ### P1 — Manual browser / folder QA
 
@@ -318,11 +317,11 @@ tests/e2e/                 # Playwright + PNG fixtures
 
 ### “Deploy to Cloudflare”
 
-1. Read §5 P0.  
-2. Authenticate Cloudflare.  
-3. Run `npm run deploy` or connect Workers Builds; get URL.
-4. Smoke import on production.  
-5. Update §2 table + Cloudflare URL in this file and commit.  
+1. Read §5 P0.
+2. Authenticate Cloudflare if deploying manually.
+3. Run `npm run verify && npm run deploy`, or use the configured Workers Build.
+4. Smoke the root URL, an SPA fallback route, and a local image import.
+5. Update the changelog only when the endpoint, ownership, or deployment model changes.
 
 ### “Review v0 completeness”
 
@@ -347,10 +346,10 @@ If the feature is in §5 “Out of scope”, refuse or escalate unless product o
 ## 10. Commit / remote state at handoff
 
 ```text
-Commit:  315a18f Orthogonal size norm; cross-rail muted thumbs swap A/B
+Commit:  ef212dd Full control cycles A↔B; side tap is opposite full
 Branch:  main
 Remote:  origin = https://github.com/whiddershins/image-compare-workbench.git
-Tree:    local Cloudflare POC and review changes pending
+Tree:    deployment-status documentation update pending
 ```
 
 When you land deploy or QA, append a short **Changelog** subsection below rather than deleting history.
@@ -364,8 +363,11 @@ When you land deploy or QA, append a short **Changelog** subsection below rather
 - **2026-08-07** — View: sticky `wipe \| a \| b`; Full re-press cycles a↔b; hold tap = opposite full (A tap / B tap).
 - **2026-08-07** — Wipe **V / H** axis (vertical A-left default; horizontal A-above). World lock uses worldX or worldY.
 - **2026-08-07** — Added an assets-only Cloudflare Worker POC with project-local Wrangler, SPA fallback,
-  local preview, dry-run validation, and deploy scripts. Temporary deploy verified; permanent deploy
-  remains pending auth.
+  local preview, dry-run validation, and deploy scripts. The initial temporary deploy was verified;
+  its later account claim is recorded below.
 - **2026-08-07** — Quality pass serialized imports, fixed empty-state import feedback and keyboard
   routing, tightened modal/a11y behavior and thumbnail invalidation, removed unused test dependencies,
   and expanded typechecking to test/config code.
+- **2026-08-07** — Claimed the temporary Worker into the maintainer's personal Cloudflare account.
+  The production URL is persistent and returned HTTP 200 for both `/` and an SPA fallback route.
+  Durable Objects remain future AI bridge work.

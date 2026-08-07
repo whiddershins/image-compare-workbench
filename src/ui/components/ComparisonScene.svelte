@@ -116,6 +116,8 @@
     image-rendering: auto;
     pointer-events: none;
     user-select: none;
+    /* Avoid flash of empty checker if browser revalidates blob on rare remounts */
+    content-visibility: auto;
   }
 
   .overlay-msg {

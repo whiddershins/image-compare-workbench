@@ -2,7 +2,10 @@
   import type { Workspace } from '../../domain/model';
   import { getAsset } from '../../domain/workspaceTransitions';
   import { assetWorldScaleInWorkspace } from '../../domain/sizeNormalization';
-  import { displayWipePosition, effectiveView as resolveView } from '../../domain/wipe';
+  import {
+    displayWipePosition,
+    effectiveView as resolveView,
+  } from '../../domain/wipe';
   import { controller } from '../stores/workspaceStore';
   import ComparisonScene from './ComparisonScene.svelte';
   import WipeDivider from './WipeDivider.svelte';
@@ -25,7 +28,7 @@
 
   const camera = $derived(workspace.camera);
   /** Sticky wipe|a|b, or opposite full while tapping */
-  const effectiveView = $derived(
+  const view = $derived(
     resolveView(workspace.comparison.viewMode, sideTapping),
   );
   const wipeAxis = $derived(workspace.comparison.axis);
@@ -42,6 +45,14 @@
     assetB ? assetWorldScaleInWorkspace(workspace, assetB) : 1,
   );
 
+  // Keep both scenes mounted always — only CSS visibility/clip changes.
+  // Remounting <img> on every A/B tap caused intermittent decode blinks.
+  const showA = $derived(view === 'a' || view === 'wipe');
+  const showB = $derived(view === 'b' || view === 'wipe');
+  const showWipeChrome = $derived(view === 'wipe');
+  // Full A: no clip (100% A). Wipe: live wipe %. Full B: A layer hidden.
+  const wipePercent = $derived(view === 'wipe' ? wipe * 100 : 100);
+
   function resolveUrl(
     side: 'a' | 'b',
     assetId: string | null,
@@ -53,7 +64,6 @@
       return { url: state.url, loading: false, error: null };
     }
     if (state.status === 'loading' && state.assetId === assetId) {
-      // Keep previous ready URL if any via registry for display
       const res = controller.registry.get(assetId);
       return {
         url: res.ok ? res.value.originalUrl : null,
@@ -75,9 +85,6 @@
   const sideA = $derived(resolveUrl('a', workspace.selection.a));
   const sideB = $derived(resolveUrl('b', workspace.selection.b));
 
-  // Wipe clip: position 0 = all B (A clipped to 0 width), 1 = all A
-  const wipePercent = $derived(wipe * 100);
-
   $effect(() => {
     if (!hostEl) return;
     const ro = new ResizeObserver((entries) => {
@@ -94,11 +101,8 @@
   function onPointerDown(e: PointerEvent) {
     if (!camera) return;
     if (e.button !== 0) return;
-    // Wipe handle stops propagation; space or middle-ish pan
     const shouldPan = spaceHeld || e.button === 0;
     if (!shouldPan) return;
-
-    // Don't pan if target is wipe (only present in wipe mode)
     if ((e.target as HTMLElement).closest('.wipe')) return;
 
     e.preventDefault();
@@ -136,14 +140,12 @@
       y: e.clientY - rect.top,
     };
 
-    // Ctrl/Meta + wheel or pinch (ctrlKey on trackpad pinch)
     if (e.ctrlKey || e.metaKey) {
       const factor = Math.exp(-e.deltaY * 0.01);
       controller.zoomAt(viewport, point, factor);
       return;
     }
 
-    // Two-axis pan
     controller.pan(-e.deltaX, -e.deltaY);
   }
 </script>
@@ -152,6 +154,7 @@
   class="viewport"
   bind:this={hostEl}
   data-testid="compare-viewport"
+  data-view={view}
   style:cursor
   onpointerdown={onPointerDown}
   onwheel={onWheel}
@@ -159,7 +162,32 @@
   aria-label="Comparison viewport"
 >
   {#if camera && viewport.width > 0}
-    {#if effectiveView === 'a'}
+    <!-- Both layers stay mounted; toggle visibility only (no <img> remount). -->
+    <div class="layer layer-b" class:hidden={!showB} aria-hidden={!showB}>
+      <ComparisonScene
+        asset={assetB}
+        imageUrl={sideB.url}
+        {camera}
+        {viewport}
+        worldScale={scaleB}
+        loading={sideB.loading}
+        error={sideB.error}
+        label="B"
+      />
+    </div>
+
+    <div
+      class="layer layer-a"
+      class:hidden={!showA}
+      class:clip-active={showWipeChrome}
+      class:axis-vertical={wipeAxis === 'vertical'}
+      class:axis-horizontal={wipeAxis === 'horizontal'}
+      class:full-unclipped={view === 'a'}
+      style:--wipe-percent="{wipePercent}%"
+      data-testid="clip-a"
+      data-axis={wipeAxis}
+      aria-hidden={!showA}
+    >
       <ComparisonScene
         asset={assetA}
         imageUrl={sideA.url}
@@ -170,59 +198,18 @@
         error={sideA.error}
         label="A"
       />
-    {:else if effectiveView === 'b'}
-      <ComparisonScene
-        asset={assetB}
-        imageUrl={sideB.url}
-        {camera}
-        {viewport}
-        worldScale={scaleB}
-        loading={sideB.loading}
-        error={sideB.error}
-        label="B"
-      />
-    {:else}
-      <!-- Wipe: B full, A clipped over B -->
-      <ComparisonScene
-        asset={assetB}
-        imageUrl={sideB.url}
-        {camera}
-        {viewport}
-        worldScale={scaleB}
-        loading={sideB.loading}
-        error={sideB.error}
-        label="B"
-      />
+    </div>
 
-      <div
-        class="clip-a"
-        class:axis-vertical={wipeAxis === 'vertical'}
-        class:axis-horizontal={wipeAxis === 'horizontal'}
-        style:--wipe-percent="{wipePercent}%"
-        data-testid="clip-a"
-        data-axis={wipeAxis}
-      >
-        <ComparisonScene
-          asset={assetA}
-          imageUrl={sideA.url}
-          {camera}
-          {viewport}
-          worldScale={scaleA}
-          loading={sideA.loading}
-          error={sideA.error}
-          label="A"
-        />
-      </div>
-
+    {#if showWipeChrome}
       <WipeDivider position={wipe} axis={wipeAxis} {viewport} />
     {/if}
 
     <div class="labels" aria-hidden="true">
-      {#if effectiveView === 'a'}
+      {#if view === 'a'}
         <span class="label-a" data-testid="label-a"
           >A · {assetA?.name ?? '—'}{sideTapping ? ' · A tap' : ''}</span
         >
-      {:else if effectiveView === 'b'}
+      {:else if view === 'b'}
         <span class="label-b" data-testid="label-b"
           >B · {assetB?.name ?? '—'}{sideTapping ? ' · B tap' : ''}</span
         >
@@ -251,25 +238,36 @@
     touch-action: none;
   }
 
-  .clip-a {
+  .layer {
     position: absolute;
     inset: 0;
-    z-index: 2;
     pointer-events: none;
   }
 
-  /* vertical: A left of divider — clip from the right */
-  .clip-a.axis-vertical {
+  .layer.hidden {
+    visibility: hidden;
+  }
+
+  .layer-b {
+    z-index: 1;
+  }
+
+  .layer-a {
+    z-index: 2;
+  }
+
+  /* Wipe: A clipped to left (V) or top (H) of divider */
+  .layer-a.clip-active.axis-vertical {
     clip-path: inset(0 calc(100% - var(--wipe-percent)) 0 0);
   }
 
-  /* horizontal: A above divider — clip from the bottom */
-  .clip-a.axis-horizontal {
+  .layer-a.clip-active.axis-horizontal {
     clip-path: inset(0 0 calc(100% - var(--wipe-percent)) 0);
   }
 
-  .clip-a :global(.scene) {
-    pointer-events: none;
+  /* Full A: entire frame is A */
+  .layer-a.full-unclipped {
+    clip-path: none;
   }
 
   .labels {

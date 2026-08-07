@@ -37,14 +37,17 @@ npm run preview
 
 ## Deployment (Cloudflare Workers)
 
-The POC is an assets-only Worker. Vite builds `dist/`; Wrangler deploys it with SPA fallback. No
-server-side handler, binding, account secret, or image upload path is present.
+**Live:** [image-compare-workbench.marshy-runner.workers.dev](https://image-compare-workbench.marshy-runner.workers.dev)
+
+Production is a persistent, assets-only Worker owned by the maintainer's personal Cloudflare
+account. Vite builds `dist/`; Wrangler deploys it with SPA fallback. No server-side handler,
+binding, account secret, Durable Object, or image upload path is present yet.
 
 ```bash
 # Validate the production build and Worker bundle without deploying.
 npm run deploy:check
 
-# One-time local authentication, then deploy.
+# Authenticate this machine when a manual production update is needed.
 npx wrangler login
 npm run deploy
 ```
@@ -55,8 +58,8 @@ deploy command `npx wrangler deploy`. The checked-in `wrangler.jsonc` is the sou
 Use `npm run preview:cloudflare` when you want Wrangler's local serving behavior; ordinary UI work
 can continue to use the faster `npm run dev` loop.
 
-The same Worker can later host an API or Durable Object bridge by adding a Worker entry point and
-routing only `/api/*` through it, while static assets remain asset-first.
+The persistent deployment can later host an API or Durable Object bridge by adding a Worker entry
+point and routing only `/api/*` through it, while static assets remain asset-first.
 
 ## Browser behavior
 
