@@ -116,7 +116,7 @@ export const SIZE_NORM_REFERENCES: readonly SizeNormReference[] = [
 ] as const;
 
 export const DEFAULT_SIZE_NORMALIZATION: SizeNormalization = {
-  basis: 'native',
+  basis: 'max-edge',
   reference: 'pair',
 };
 
