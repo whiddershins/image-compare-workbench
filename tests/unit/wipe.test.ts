@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import type { Workspace } from '../../src/domain/model';
 import {
+  cycleFullView,
   displayWipePosition,
+  effectiveView,
+  fullButtonLabel,
   setWipeFromViewportPosition,
   setWipeLock,
   setWipeAxis,
   setViewMode,
+  tapButtonLabel,
+  tapTarget,
   defaultComparison,
 } from '../../src/domain/wipe';
 import { emptyWorkspace } from '../../src/domain/workspaceTransitions';
@@ -40,20 +45,38 @@ describe('wipe lock', () => {
     expect(c.worldY).toBe(0);
   });
 
-  it('setViewMode only toggles sticky Full A / Wipe; keeps wipe geometry', () => {
+  it('setViewMode keeps wipe geometry', () => {
     let w = workspaceWithCamera();
     w = setWipeFromViewportPosition(w, 0.3, viewport);
     const cam = w.camera;
     const pos = w.comparison.position;
     const worldX = w.comparison.worldX;
-    w = setViewMode(w, 'full-a');
-    expect(w.comparison.viewMode).toBe('full-a');
+    w = setViewMode(w, 'a');
+    expect(w.comparison.viewMode).toBe('a');
     expect(w.comparison.position).toBe(pos);
     expect(w.comparison.worldX).toBe(worldX);
     expect(w.camera).toBe(cam);
     w = setViewMode(w, 'wipe');
     expect(w.comparison.viewMode).toBe('wipe');
     expect(w.comparison.position).toBe(pos);
+  });
+
+  it('cycleFullView and tapTarget are simple ternaries', () => {
+    expect(cycleFullView('wipe')).toBe('a');
+    expect(cycleFullView('a')).toBe('b');
+    expect(cycleFullView('b')).toBe('a');
+    expect(tapTarget('wipe')).toBe('b');
+    expect(tapTarget('a')).toBe('b');
+    expect(tapTarget('b')).toBe('a');
+    expect(effectiveView('a', false)).toBe('a');
+    expect(effectiveView('a', true)).toBe('b');
+    expect(effectiveView('b', true)).toBe('a');
+    expect(effectiveView('wipe', true)).toBe('b');
+    expect(fullButtonLabel('wipe')).toBe('Full A');
+    expect(fullButtonLabel('a')).toBe('Full A');
+    expect(fullButtonLabel('b')).toBe('Full B');
+    expect(tapButtonLabel('a')).toBe('B tap');
+    expect(tapButtonLabel('b')).toBe('A tap');
   });
 
   it('world lock: zoom preserves worldX; display position changes', () => {

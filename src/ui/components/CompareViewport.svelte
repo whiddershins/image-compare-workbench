@@ -2,7 +2,7 @@
   import type { Workspace } from '../../domain/model';
   import { getAsset } from '../../domain/workspaceTransitions';
   import { assetWorldScaleInWorkspace } from '../../domain/sizeNormalization';
-  import { displayWipePosition } from '../../domain/wipe';
+  import { displayWipePosition, effectiveView as resolveView } from '../../domain/wipe';
   import { controller } from '../stores/workspaceStore';
   import ComparisonScene from './ComparisonScene.svelte';
   import WipeDivider from './WipeDivider.svelte';
@@ -11,11 +11,11 @@
     workspace: Workspace;
     selectionLoadVersion: number;
     spaceHeld: boolean;
-    /** Momentary full B while B tap is held */
-    peekingB: boolean;
+    /** Momentary opposite full while A/B tap is held */
+    sideTapping: boolean;
   }
 
-  let { workspace, selectionLoadVersion, spaceHeld, peekingB }: Props =
+  let { workspace, selectionLoadVersion, spaceHeld, sideTapping }: Props =
     $props();
 
   let hostEl: HTMLDivElement | undefined = $state();
@@ -24,9 +24,9 @@
   let cursor = $derived(panning ? 'grabbing' : spaceHeld ? 'grab' : 'default');
 
   const camera = $derived(workspace.camera);
-  /** Sticky Full A / Wipe, overridden by B tap → full B */
+  /** Sticky wipe|a|b, or opposite full while tapping */
   const effectiveView = $derived(
-    peekingB ? 'full-b' : workspace.comparison.viewMode,
+    resolveView(workspace.comparison.viewMode, sideTapping),
   );
   const wipeAxis = $derived(workspace.comparison.axis);
   /** On-screen wipe fraction (world-lock derives from camera each frame). */
@@ -159,7 +159,7 @@
   aria-label="Comparison viewport"
 >
   {#if camera && viewport.width > 0}
-    {#if effectiveView === 'full-a'}
+    {#if effectiveView === 'a'}
       <ComparisonScene
         asset={assetA}
         imageUrl={sideA.url}
@@ -170,7 +170,7 @@
         error={sideA.error}
         label="A"
       />
-    {:else if effectiveView === 'full-b'}
+    {:else if effectiveView === 'b'}
       <ComparisonScene
         asset={assetB}
         imageUrl={sideB.url}
@@ -218,13 +218,13 @@
     {/if}
 
     <div class="labels" aria-hidden="true">
-      {#if effectiveView === 'full-a'}
+      {#if effectiveView === 'a'}
         <span class="label-a" data-testid="label-a"
-          >A · {assetA?.name ?? '—'}</span
+          >A · {assetA?.name ?? '—'}{sideTapping ? ' · A tap' : ''}</span
         >
-      {:else if effectiveView === 'full-b'}
+      {:else if effectiveView === 'b'}
         <span class="label-b" data-testid="label-b"
-          >B · {assetB?.name ?? '—'}{peekingB ? ' · B tap' : ''}</span
+          >B · {assetB?.name ?? '—'}{sideTapping ? ' · B tap' : ''}</span
         >
       {:else}
         <span class="label-a" data-testid="label-a"

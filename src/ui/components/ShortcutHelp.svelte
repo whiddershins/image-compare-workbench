@@ -46,8 +46,8 @@
         <div><dt>A / B</dt><dd>Activate side A or B</dd></div>
         <div><dt>↑ / ↓</dt><dd>Previous / next image on active side</dd></div>
         <div><dt>S</dt><dd>Swap A and B</dd></div>
-        <div><dt>Full A / Wipe</dt><dd>Sticky view (mutually exclusive)</dd></div>
-        <div><dt>Hold V / B tap</dt><dd>Momentary full B; release restores</dd></div>
+        <div><dt>Full A↔B / Wipe</dt><dd>Sticky; re-press Full flips A/B</dd></div>
+        <div><dt>Hold V / A·B tap</dt><dd>Momentary other full; release restores</dd></div>
         <div><dt>F</dt><dd>Fit current pair</dd></div>
         <div><dt>0</dt><dd>100% zoom</dd></div>
         <div><dt>− / =</dt><dd>Zoom out / in</dd></div>
@@ -70,9 +70,9 @@
       </p>
       <h3>View mode</h3>
       <p class="note">
-        <strong>Full A</strong> and <strong>Wipe</strong> are sticky and mutually
-        exclusive. <strong>B tap</strong> (hold toolbar button or <strong>V</strong>)
-        always shows full B while held, then returns to Full A or Wipe.
+        <strong>Full A</strong>/<strong>Full B</strong> and <strong>Wipe</strong>
+        are sticky. Re-press Full to flip A↔B. <strong>B tap</strong>/<strong>A tap</strong>
+        (hold or <strong>V</strong>) shows the other full side until release.
       </p>
       <h3>Wipe axis &amp; lock</h3>
       <p class="note">

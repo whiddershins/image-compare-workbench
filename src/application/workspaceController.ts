@@ -4,7 +4,6 @@ import type {
   Side,
   SizeNormalization,
   ViewportSize,
-  EffectiveView,
   ViewMode,
   WipeAxis,
   WipeLock,
@@ -21,10 +20,13 @@ import {
   swapSelections,
 } from '../domain/workspaceTransitions';
 import {
+  cycleFullView,
+  effectiveView,
   setViewMode,
   setWipeAxis,
   setWipeFromViewportPosition,
   setWipeLock,
+  tapTarget,
 } from '../domain/wipe';
 import {
   fitCurrentPair,
@@ -60,7 +62,7 @@ export type SummaryListener = (summary: ImportSummary | null) => void;
 export type ErrorListener = (error: AppError | null) => void;
 export type LoadingListener = (loading: boolean) => void;
 export type SelectionLoadListener = () => void;
-export type PeekListener = (peeking: boolean) => void;
+export type SideTapListener = (tapping: boolean) => void;
 export type ImportBatchProcessor = typeof processImportBatch;
 
 /**
@@ -79,15 +81,15 @@ export class WorkspaceController {
   private importTail: Promise<void> = Promise.resolve();
   private pendingImports = 0;
   private readonly importBatchProcessor: ImportBatchProcessor;
-  /** Momentary full-B overlay (B tap); not domain state. */
-  private peekingB = false;
+  /** Momentary opposite-full overlay (A tap / B tap); not domain state. */
+  private sideTapping = false;
 
   private workspaceListeners = new Set<WorkspaceListener>();
   private summaryListeners = new Set<SummaryListener>();
   private errorListeners = new Set<ErrorListener>();
   private loadingListeners = new Set<LoadingListener>();
   private selectionLoadListeners = new Set<SelectionLoadListener>();
-  private peekListeners = new Set<PeekListener>();
+  private sideTapListeners = new Set<SideTapListener>();
 
   constructor(importBatchProcessor: ImportBatchProcessor = processImportBatch) {
     this.importBatchProcessor = importBatchProcessor;
@@ -134,41 +136,52 @@ export class WorkspaceController {
     return () => this.selectionLoadListeners.delete(listener);
   }
 
-  subscribePeek(listener: PeekListener): () => void {
-    this.peekListeners.add(listener);
-    return () => this.peekListeners.delete(listener);
+  subscribeSideTap(listener: SideTapListener): () => void {
+    this.sideTapListeners.add(listener);
+    return () => this.sideTapListeners.delete(listener);
   }
 
-  isPeekingB(): boolean {
-    return this.peekingB;
+  isSideTapping(): boolean {
+    return this.sideTapping;
   }
 
-  /**
-   * What the viewport should draw: sticky Full A / Wipe, or Full B while B tap is held.
-   */
-  getEffectiveView(): EffectiveView {
-    if (this.peekingB) return 'full-b';
-    return this.workspace.comparison.viewMode;
+  /** Sticky view, or opposite full while A/B tap is held. */
+  getEffectiveView(): ViewMode {
+    return effectiveView(
+      this.workspace.comparison.viewMode,
+      this.sideTapping,
+    );
   }
 
-  beginPeekB(): void {
-    if (this.peekingB) return;
-    this.peekingB = true;
-    this.emitPeek();
+  /** Which solo side the hold-tap shows right now. */
+  getTapTarget(): 'a' | 'b' {
+    return tapTarget(this.workspace.comparison.viewMode);
   }
 
-  endPeekB(): void {
-    if (!this.peekingB) return;
-    this.peekingB = false;
-    this.emitPeek();
+  beginSideTap(): void {
+    if (this.sideTapping) return;
+    this.sideTapping = true;
+    this.emitSideTap();
+  }
+
+  endSideTap(): void {
+    if (!this.sideTapping) return;
+    this.sideTapping = false;
+    this.emitSideTap();
+  }
+
+  /** Full A/B control: enter full A from wipe, or flip a↔b. */
+  cycleFullView(): void {
+    const next = cycleFullView(this.workspace.comparison.viewMode);
+    this.setWorkspace(setViewMode(this.workspace, next));
   }
 
   private emitWorkspace(): void {
     for (const l of this.workspaceListeners) l(this.workspace);
   }
 
-  private emitPeek(): void {
-    for (const l of this.peekListeners) l(this.peekingB);
+  private emitSideTap(): void {
+    for (const l of this.sideTapListeners) l(this.sideTapping);
   }
 
   private emitSummary(): void {
@@ -364,7 +377,7 @@ export class WorkspaceController {
   }
 
   setViewMode(mode: ViewMode): void {
-    // Sticky mode only — does not end B tap; B tap still overlays until release.
+    // Sticky mode only — does not end side-tap; hold still overlays until release.
     this.setWorkspace(setViewMode(this.workspace, mode));
   }
 
@@ -461,13 +474,13 @@ export class WorkspaceController {
     this.generation += 1;
     this.pendingImports = 0;
     this.importing = false;
-    this.peekingB = false;
+    this.sideTapping = false;
     this.registry.clear();
     this.workspaceListeners.clear();
     this.summaryListeners.clear();
     this.errorListeners.clear();
     this.loadingListeners.clear();
     this.selectionLoadListeners.clear();
-    this.peekListeners.clear();
+    this.sideTapListeners.clear();
   }
 }

@@ -54,20 +54,16 @@ export type WipeLock = 'world' | 'viewport';
 export type WipeAxis = 'vertical' | 'horizontal';
 
 /**
- * Sticky presentation of A/B (toolbar: Full A | Wipe).
- * Mutually exclusive. B tap (momentary full B) is NOT stored here — it is
- * session UI state that overlays this mode while a key/button is held.
- * - full-a: only side A (full frame)
+ * Sticky presentation (domain).
  * - wipe: A/B wipe composite (default)
- * Wipe geometry (position/lock) is preserved when switching sticky modes.
+ * - a: full A only
+ * - b: full B only
+ *
+ * Toolbar: Full A|B toggles a↔b on re-press; Wipe is mutually exclusive.
+ * Momentary "A tap" / "B tap" is session UI (not stored): hold shows the
+ * other full side, release restores this sticky mode.
  */
-export type ViewMode = 'full-a' | 'wipe';
-
-/**
- * What the viewport actually draws right now.
- * Includes momentary B tap (full B) which never becomes sticky domain state.
- */
-export type EffectiveView = ViewMode | 'full-b';
+export type ViewMode = 'wipe' | 'a' | 'b';
 
 export type ComparisonState = {
   readonly kind: 'wipe';
@@ -93,8 +89,6 @@ export type ComparisonState = {
 export const DEFAULT_WIPE_LOCK: WipeLock = 'world';
 export const DEFAULT_WIPE_AXIS: WipeAxis = 'vertical';
 export const DEFAULT_VIEW_MODE: ViewMode = 'wipe';
-
-export const VIEW_MODES: readonly ViewMode[] = ['full-a', 'wipe'] as const;
 
 /**
  * What dimension is equalized into world space (orthogonal to reference).

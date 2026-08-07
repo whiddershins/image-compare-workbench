@@ -108,13 +108,13 @@ If an image is selected as A, it appears **muted on the B rail** (and vice versa
 
 ## View mode
 
-| Control | Type | Shows |
-|---------|------|--------|
-| **Full A** | Sticky (vs Wipe) | Side A only |
-| **Wipe** | Sticky (vs Full A) | A/B wipe composite (default) |
-| **B tap** | Momentary hold | Full B while held; release restores Full A or Wipe |
+| Control | Type | Behavior |
+|---------|------|----------|
+| **Full A** / **Full B** | Sticky | First press → full A; press again → full B; again → full A… |
+| **Wipe** | Sticky | A/B wipe composite (default); exclusive with Full |
+| **B tap** / **A tap** | Hold | Shows the *other* full side; release restores sticky mode |
 
-Hold **V** or the **B tap** button. Same shared camera; wipe geometry is unchanged by B tap.
+Hold **V** or the tap button. Same camera; wipe geometry unchanged.
 
 ## Wipe axis & lock
 

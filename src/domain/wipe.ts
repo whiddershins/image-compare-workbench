@@ -49,26 +49,49 @@ export function setViewMode(
   };
 }
 
-export function viewModeLabel(mode: ViewMode): string {
-  switch (mode) {
-    case 'full-a':
-      return 'Full A';
-    case 'wipe':
-      return 'Wipe';
-  }
+/** Full control: wipe→a, a→b, b→a */
+export function cycleFullView(mode: ViewMode): ViewMode {
+  return mode === 'a' ? 'b' : 'a';
 }
 
-export function viewModeDescription(mode: ViewMode): string {
-  switch (mode) {
-    case 'full-a':
-      return 'Full A only (same camera). Mutually exclusive with Wipe.';
-    case 'wipe':
-      return 'A/B wipe composite (default). Mutually exclusive with Full A.';
-  }
+/** Label on the Full segment button */
+export function fullButtonLabel(mode: ViewMode): string {
+  return mode === 'b' ? 'Full B' : 'Full A';
 }
 
-export const B_TAP_DESCRIPTION =
-  'Hold to show full B. Release returns to Full A or Wipe (whichever was sticky).';
+/** Momentary hold shows the other solo side (wipe or full A → B; full B → A) */
+export function tapTarget(mode: ViewMode): 'a' | 'b' {
+  return mode === 'b' ? 'a' : 'b';
+}
+
+export function tapButtonLabel(mode: ViewMode): string {
+  return tapTarget(mode) === 'a' ? 'A tap' : 'B tap';
+}
+
+/** What to draw: sticky mode, or opposite full while side-tap is held */
+export function effectiveView(mode: ViewMode, tapping: boolean): ViewMode {
+  return tapping ? tapTarget(mode) : mode;
+}
+
+export function fullButtonDescription(mode: ViewMode): string {
+  if (mode === 'wipe') {
+    return 'Show full A. Press again to switch to full B.';
+  }
+  if (mode === 'a') {
+    return 'Full A (active). Press again for full B.';
+  }
+  return 'Full B (active). Press again for full A.';
+}
+
+export const WIPE_BUTTON_DESCRIPTION =
+  'A/B wipe composite. Mutually exclusive with Full A/B.';
+
+export function tapButtonDescription(mode: ViewMode): string {
+  const t = tapTarget(mode);
+  const back =
+    mode === 'wipe' ? 'Wipe' : mode === 'a' ? 'Full A' : 'Full B';
+  return `Hold to show full ${t.toUpperCase()}. Release returns to ${back}.`;
+}
 
 /**
  * Viewport-normalized wipe position used for clip-path and the divider.

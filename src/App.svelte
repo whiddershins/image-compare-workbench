@@ -19,14 +19,14 @@
   let resourceVersion = $state(0);
   let helpOpen = $state(false);
   let spaceHeld = $state(false);
-  let peekingB = $state(false);
+  let sideTapping = $state(false);
   let viewportSize = $state({ width: 800, height: 600 });
 
   const loaded = $derived(!isEmpty(workspace));
 
   onMount(() => {
     workspace = controller.getWorkspace();
-    peekingB = controller.isPeekingB();
+    sideTapping = controller.isSideTapping();
     const unsubs = [
       controller.subscribe((w) => {
         const resourcesChanged = w.imageSet.assets !== workspace.imageSet.assets;
@@ -45,8 +45,8 @@
       controller.subscribeSelectionLoad(() => {
         selectionLoadVersion += 1;
       }),
-      controller.subscribePeek((v) => {
-        peekingB = v;
+      controller.subscribeSideTap((v) => {
+        sideTapping = v;
       }),
     ];
 
@@ -90,10 +90,10 @@
         return;
       }
 
-      // Hold V = momentary full B (B tap)
+      // Hold V = momentary opposite full (A tap / B tap)
       if ((e.key === 'v' || e.key === 'V') && !e.repeat) {
         e.preventDefault();
-        controller.beginPeekB();
+        controller.beginSideTap();
         return;
       }
 
@@ -151,11 +151,11 @@
 
     function onKeyUp(e: KeyboardEvent) {
       if (e.key === ' ') spaceHeld = false;
-      if (e.key === 'v' || e.key === 'V') controller.endPeekB();
+      if (e.key === 'v' || e.key === 'V') controller.endSideTap();
     }
 
     function onBlur() {
-      controller.endPeekB();
+      controller.endSideTap();
       spaceHeld = false;
     }
 
@@ -193,7 +193,7 @@
         <Toolbar
           {workspace}
           viewport={viewportSize}
-          {peekingB}
+          {sideTapping}
           onhelp={() => (helpOpen = true)}
         />
         <div
@@ -206,7 +206,7 @@
             {workspace}
             {selectionLoadVersion}
             {spaceHeld}
-            {peekingB}
+            {sideTapping}
           />
         </div>
       </div>

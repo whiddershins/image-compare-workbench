@@ -2,15 +2,10 @@
   import type {
     SizeNormBasis,
     SizeNormReference,
-    ViewMode,
     ViewportSize,
     Workspace,
   } from '../../domain/model';
-  import {
-    SIZE_NORM_BASES,
-    SIZE_NORM_REFERENCES,
-    VIEW_MODES,
-  } from '../../domain/model';
+  import { SIZE_NORM_BASES, SIZE_NORM_REFERENCES } from '../../domain/model';
   import { zoomPercent } from '../../domain/camera';
   import {
     sizeNormBasisDescription,
@@ -21,9 +16,11 @@
     withSizeNormReference,
   } from '../../domain/sizeNormalization';
   import {
-    B_TAP_DESCRIPTION,
-    viewModeDescription,
-    viewModeLabel,
+    fullButtonDescription,
+    fullButtonLabel,
+    tapButtonDescription,
+    tapButtonLabel,
+    WIPE_BUTTON_DESCRIPTION,
     wipeAxisDescription,
     wipeAxisLabel,
     wipeLockDescription,
@@ -40,11 +37,11 @@
   interface Props {
     workspace: Workspace;
     viewport: ViewportSize;
-    peekingB: boolean;
+    sideTapping: boolean;
     onhelp: () => void;
   }
 
-  let { workspace, viewport, peekingB, onhelp }: Props = $props();
+  let { workspace, viewport, sideTapping, onhelp }: Props = $props();
 
   let fileInput: HTMLInputElement | undefined = $state();
   let folderInput: HTMLInputElement | undefined = $state();
@@ -57,28 +54,34 @@
   const wipeAxis = $derived(workspace.comparison.axis);
   const viewMode = $derived(workspace.comparison.viewMode);
   const refDisabled = $derived(sizeNorm.basis === 'native');
+  const fullActive = $derived(viewMode !== 'wipe' && !sideTapping);
+  const wipeActive = $derived(viewMode === 'wipe' && !sideTapping);
 
   function fit() {
     controller.fit(viewport);
   }
 
-  function setView(mode: ViewMode) {
-    controller.setViewMode(mode);
+  function onFullClick() {
+    controller.cycleFullView();
   }
 
-  function onPeekDown(e: PointerEvent) {
+  function onWipeClick() {
+    controller.setViewMode('wipe');
+  }
+
+  function onTapDown(e: PointerEvent) {
     e.preventDefault();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    controller.beginPeekB();
+    controller.beginSideTap();
   }
 
-  function onPeekUp(e: PointerEvent) {
+  function onTapUp(e: PointerEvent) {
     try {
       (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
     } catch {
       /* already released */
     }
-    controller.endPeekB();
+    controller.endSideTap();
   }
 
   function onBasisChange(e: Event) {
@@ -175,39 +178,48 @@
       aria-label="View mode"
       data-testid="view-mode"
     >
-      {#each VIEW_MODES as mode}
-        <button
-          type="button"
-          class="btn seg-btn"
-          class:active={viewMode === mode && !peekingB}
-          role="radio"
-          aria-checked={viewMode === mode && !peekingB}
-          data-testid={`view-mode-${mode}`}
-          title={viewModeDescription(mode)}
-          onclick={() => setView(mode)}
-        >
-          {viewModeLabel(mode)}
-        </button>
-      {/each}
+      <button
+        type="button"
+        class="btn seg-btn"
+        class:active={fullActive}
+        role="radio"
+        aria-checked={fullActive}
+        data-testid="view-mode-full"
+        title={fullButtonDescription(viewMode)}
+        onclick={onFullClick}
+      >
+        {fullButtonLabel(viewMode)}
+      </button>
+      <button
+        type="button"
+        class="btn seg-btn"
+        class:active={wipeActive}
+        role="radio"
+        aria-checked={wipeActive}
+        data-testid="view-mode-wipe"
+        title={WIPE_BUTTON_DESCRIPTION}
+        onclick={onWipeClick}
+      >
+        Wipe
+      </button>
     </div>
     <button
       type="button"
       class="btn"
-      class:active-toggle={peekingB}
-      data-testid="b-tap-btn"
-      title={`${B_TAP_DESCRIPTION} (hold V)`}
-      aria-label="B tap — hold for full B"
-      aria-pressed={peekingB}
-      onpointerdown={onPeekDown}
-      onpointerup={onPeekUp}
-      onpointercancel={onPeekUp}
+      class:active-toggle={sideTapping}
+      data-testid="side-tap-btn"
+      title={`${tapButtonDescription(viewMode)} (hold V)`}
+      aria-label={`${tapButtonLabel(viewMode)} — hold`}
+      aria-pressed={sideTapping}
+      onpointerdown={onTapDown}
+      onpointerup={onTapUp}
+      onpointercancel={onTapUp}
       onpointerleave={(e) => {
-        // End B tap if pointer leaves while pressed without capture (fallback)
-        if (e.buttons === 0) controller.endPeekB();
+        if (e.buttons === 0) controller.endSideTap();
       }}
       oncontextmenu={(e) => e.preventDefault()}
     >
-      B tap
+      {tapButtonLabel(viewMode)}
     </button>
     <button
       type="button"
