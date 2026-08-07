@@ -45,8 +45,19 @@ export interface CameraState {
  */
 export type WipeLock = 'world' | 'viewport';
 
+/**
+ * How the central viewport presents A/B.
+ * Mutually exclusive sticky modes (toolbar segment).
+ * - full-a: only side A (full frame)
+ * - wipe: A/B wipe composite (default)
+ * - full-b: only side B (full frame)
+ * Wipe geometry (position/lock) is preserved when switching modes.
+ */
+export type ViewMode = 'full-a' | 'wipe' | 'full-b';
+
 export type ComparisonState = {
   readonly kind: 'wipe';
+  readonly viewMode: ViewMode;
   readonly lock: WipeLock;
   /**
    * Normalized viewport X coordinate (0 = all B, 1 = all A).
@@ -61,6 +72,13 @@ export type ComparisonState = {
 };
 
 export const DEFAULT_WIPE_LOCK: WipeLock = 'world';
+export const DEFAULT_VIEW_MODE: ViewMode = 'wipe';
+
+export const VIEW_MODES: readonly ViewMode[] = [
+  'full-a',
+  'wipe',
+  'full-b',
+] as const;
 
 /**
  * What dimension is equalized into world space (orthogonal to reference).

@@ -138,6 +138,7 @@ describe('size normalization (orthogonal basis × reference)', () => {
       camera: { centerX: 10, centerY: -4, scale: 2 },
       comparison: {
         kind: 'wipe',
+        viewMode: 'wipe',
         lock: 'world',
         position: 0.33,
         worldX: 0,

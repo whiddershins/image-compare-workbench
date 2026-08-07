@@ -4,6 +4,7 @@ import type {
   Side,
   SizeNormalization,
   ViewportSize,
+  ViewMode,
   WipeLock,
   Workspace,
 } from '../domain/model';
@@ -17,7 +18,11 @@ import {
   setSizeNormalization,
   swapSelections,
 } from '../domain/workspaceTransitions';
-import { setWipeFromViewportPosition, setWipeLock } from '../domain/wipe';
+import {
+  setViewMode,
+  setWipeFromViewportPosition,
+  setWipeLock,
+} from '../domain/wipe';
 import {
   fitCurrentPair,
   panWorkspace,
@@ -52,6 +57,7 @@ export type SummaryListener = (summary: ImportSummary | null) => void;
 export type ErrorListener = (error: AppError | null) => void;
 export type LoadingListener = (loading: boolean) => void;
 export type SelectionLoadListener = () => void;
+export type ImportBatchProcessor = typeof processImportBatch;
 
 /**
  * Effectful application controller: owns resource registry, selection loader,
@@ -66,12 +72,19 @@ export class WorkspaceController {
   private appError: AppError | null = null;
   private importing = false;
   private needsInitialFit = false;
+  private importTail: Promise<void> = Promise.resolve();
+  private pendingImports = 0;
+  private readonly importBatchProcessor: ImportBatchProcessor;
 
   private workspaceListeners = new Set<WorkspaceListener>();
   private summaryListeners = new Set<SummaryListener>();
   private errorListeners = new Set<ErrorListener>();
   private loadingListeners = new Set<LoadingListener>();
   private selectionLoadListeners = new Set<SelectionLoadListener>();
+
+  constructor(importBatchProcessor: ImportBatchProcessor = processImportBatch) {
+    this.importBatchProcessor = importBatchProcessor;
+  }
 
   getWorkspace(): Workspace {
     return this.workspace;
@@ -87,16 +100,6 @@ export class WorkspaceController {
 
   isImporting(): boolean {
     return this.importing;
-  }
-
-  consumeNeedsInitialFit(): boolean {
-    const v = this.needsInitialFit;
-    this.needsInitialFit = false;
-    return v;
-  }
-
-  peekNeedsInitialFit(): boolean {
-    return this.needsInitialFit;
   }
 
   subscribe(listener: WorkspaceListener): () => void {
@@ -154,16 +157,45 @@ export class WorkspaceController {
     this.emitError();
   }
 
-  async importDiscovered(
+  private setImporting(importing: boolean): void {
+    if (this.importing === importing) return;
+    this.importing = importing;
+    this.emitLoading();
+  }
+
+  importDiscovered(
     discovered: readonly DiscoveredFile[],
     preIssues: readonly ImportIssue[] = [],
   ): Promise<void> {
-    if (discovered.length === 0 && preIssues.length === 0) return;
+    if (discovered.length === 0 && preIssues.length === 0) {
+      return Promise.resolve();
+    }
 
-    const gen = this.generation;
+    const queuedGeneration = this.generation;
+    this.pendingImports += 1;
+    this.setImporting(true);
+
+    const job = this.importTail.then(async () => {
+      if (this.generation !== queuedGeneration) return;
+      await this.runImport(discovered, preIssues, queuedGeneration);
+    });
+
+    // One unexpected failure must not prevent later imports from running.
+    this.importTail = job.catch(() => {});
+
+    return job.finally(() => {
+      if (this.generation !== queuedGeneration) return;
+      this.pendingImports -= 1;
+      if (this.pendingImports === 0) this.setImporting(false);
+    });
+  }
+
+  private async runImport(
+    discovered: readonly DiscoveredFile[],
+    preIssues: readonly ImportIssue[],
+    generation: number,
+  ): Promise<void> {
     const wasEmpty = isEmpty(this.workspace);
-    this.importing = true;
-    this.emitLoading();
     this.setError(null);
 
     try {
@@ -174,13 +206,13 @@ export class WorkspaceController {
           -1,
         ) + 1;
 
-      const batch = await processImportBatch(discovered, preIssues, {
+      const batch = await this.importBatchProcessor(discovered, preIssues, {
         existingDuplicateKeys: existingKeys,
         startOrdinal,
-        isCancelled: () => this.generation !== gen,
+        isCancelled: () => this.generation !== generation,
       });
 
-      if (this.generation !== gen) {
+      if (this.generation !== generation) {
         // Dispose any prepared URLs
         for (const p of batch.prepared) {
           URL.revokeObjectURL(p.originalUrl);
@@ -219,16 +251,13 @@ export class WorkspaceController {
         kind: 'unexpected',
         message: e instanceof Error ? e.message : 'Import failed',
       });
-    } finally {
-      if (this.generation === gen) {
-        this.importing = false;
-        this.emitLoading();
-      }
     }
   }
 
   clear(): void {
     this.generation += 1;
+    this.pendingImports = 0;
+    this.setImporting(false);
     this.selectionLoader.reset();
     this.setWorkspace(clearDomain());
     this.registry.clear();
@@ -288,6 +317,10 @@ export class WorkspaceController {
 
   setWipeLock(lock: WipeLock, viewport: ViewportSize): void {
     this.setWorkspace(setWipeLock(this.workspace, lock, viewport));
+  }
+
+  setViewMode(mode: ViewMode): void {
+    this.setWorkspace(setViewMode(this.workspace, mode));
   }
 
   /**
@@ -381,6 +414,8 @@ export class WorkspaceController {
 
   destroy(): void {
     this.generation += 1;
+    this.pendingImports = 0;
+    this.importing = false;
     this.registry.clear();
     this.workspaceListeners.clear();
     this.summaryListeners.clear();

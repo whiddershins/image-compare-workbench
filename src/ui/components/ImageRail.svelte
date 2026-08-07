@@ -58,7 +58,7 @@
     <span class="side-label">{label}</span>
     <span class="count">{assets.length}</span>
   </button>
-  <div class="list" bind:this={railEl} role="listbox" aria-label={`Side ${label}`}>
+  <div class="list" bind:this={railEl}>
     {#each assets as asset (asset.id)}
       <ImageThumbnail
         {asset}

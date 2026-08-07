@@ -26,8 +26,8 @@ jobs:
       - name: Unit tests
         run: npm run test
 
-      - name: Build
-        run: npm run build
+      - name: Build and validate deploy
+        run: npm run deploy:check
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium

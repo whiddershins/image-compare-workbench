@@ -173,9 +173,6 @@ export function withSizeNormBasis(
   current: SizeNormalization,
   basis: SizeNormBasis,
 ): SizeNormalization {
-  if (basis === 'native') {
-    return { basis, reference: current.reference };
-  }
   return { basis, reference: current.reference };
 }
 

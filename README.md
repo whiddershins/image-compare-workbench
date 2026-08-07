@@ -17,16 +17,16 @@ npm install
 npm run dev
 ```
 
-Requires Node.js 22+ (see `.nvmrc`).
+Requires Node.js 22.12+ on the Node 22 line, or Node.js 24+ (see `.nvmrc`).
 
 ## Validation
 
 ```bash
-npm run check
-npm run test
+npm run verify
 npm run test:e2e
-npm run build
 ```
+
+`verify` runs type checks, unit tests, the production build, and a Wrangler dry run.
 
 ## Production preview
 
@@ -35,16 +35,28 @@ npm run build
 npm run preview
 ```
 
-## Deployment (Cloudflare Pages)
+## Deployment (Cloudflare Workers)
 
-| Setting | Value |
-|--------|--------|
-| Build command | `npm run build` |
-| Build output directory | `dist` |
-| Root directory | repository root |
-| Environment variables | none |
+The POC is an assets-only Worker. Vite builds `dist/`; Wrangler deploys it with SPA fallback. No
+server-side handler, binding, account secret, or image upload path is present.
 
-Connect the GitHub repository in the Cloudflare Pages dashboard. No Workers or Functions are required.
+```bash
+# Validate the production build and Worker bundle without deploying.
+npm run deploy:check
+
+# One-time local authentication, then deploy.
+npx wrangler login
+npm run deploy
+```
+
+For a git-connected Workers Build, use the repository root with build command `npm run verify` and
+deploy command `npx wrangler deploy`. The checked-in `wrangler.jsonc` is the source of truth.
+
+Use `npm run preview:cloudflare` when you want Wrangler's local serving behavior; ordinary UI work
+can continue to use the faster `npm run dev` loop.
+
+The same Worker can later host an API or Durable Object bridge by adding a Worker entry point and
+routing only `/api/*` through it, while static assets remain asset-first.
 
 ## Browser behavior
 
@@ -93,6 +105,18 @@ Example: **Height + Lock A** = old “Match A”. **Height + Both (max)** = old 
 ## Rails
 
 If an image is selected as A, it appears **muted on the B rail** (and vice versa). Click the muted thumb to **swap A↔B**. Toolbar **⇄ Swap** / key `S` still available.
+
+## View mode
+
+Toolbar segment **A | Wipe | B** (mutually exclusive):
+
+| Mode | Shows |
+|------|--------|
+| **A** | Full side A only |
+| **Wipe** | A/B wipe composite (default) |
+| **B** | Full side B only |
+
+Same shared camera. Wipe position is preserved while you visit A or B so returning to Wipe is seamless.
 
 ## Wipe lock
 

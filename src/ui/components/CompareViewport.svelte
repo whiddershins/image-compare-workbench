@@ -21,6 +21,8 @@
   let cursor = $derived(panning ? 'grabbing' : spaceHeld ? 'grab' : 'default');
 
   const camera = $derived(workspace.camera);
+  const viewMode = $derived(workspace.comparison.viewMode);
+  const showWipeUi = $derived(viewMode === 'wipe');
   /** On-screen wipe fraction (world-lock derives from camera each frame). */
   const wipe = $derived(
     displayWipePosition(workspace.comparison, workspace.camera, viewport),
@@ -33,15 +35,6 @@
   const scaleB = $derived(
     assetB ? assetWorldScaleInWorkspace(workspace, assetB) : 1,
   );
-
-  const loadA = $derived.by(() => {
-    void selectionLoadVersion;
-    return controller.selectionLoader.getState('a');
-  });
-  const loadB = $derived.by(() => {
-    void selectionLoadVersion;
-    return controller.selectionLoader.getState('b');
-  });
 
   function resolveUrl(
     side: 'a' | 'b',
@@ -99,7 +92,7 @@
     const shouldPan = spaceHeld || e.button === 0;
     if (!shouldPan) return;
 
-    // Don't pan if target is wipe
+    // Don't pan if target is wipe (only present in wipe mode)
     if ((e.target as HTMLElement).closest('.wipe')) return;
 
     e.preventDefault();
@@ -160,24 +153,7 @@
   aria-label="Comparison viewport"
 >
   {#if camera && viewport.width > 0}
-    <!-- Scene B full -->
-    <ComparisonScene
-      asset={assetB}
-      imageUrl={sideB.url}
-      {camera}
-      {viewport}
-      worldScale={scaleB}
-      loading={sideB.loading}
-      error={sideB.error}
-      label="B"
-    />
-
-    <!-- Clipped A over B (viewport coordinates) -->
-    <div
-      class="clip-a"
-      style:--wipe-percent="{wipePercent}%"
-      data-testid="clip-a"
-    >
+    {#if viewMode === 'full-a'}
       <ComparisonScene
         asset={assetA}
         imageUrl={sideA.url}
@@ -188,21 +164,71 @@
         error={sideA.error}
         label="A"
       />
-    </div>
+    {:else if viewMode === 'full-b'}
+      <ComparisonScene
+        asset={assetB}
+        imageUrl={sideB.url}
+        {camera}
+        {viewport}
+        worldScale={scaleB}
+        loading={sideB.loading}
+        error={sideB.error}
+        label="B"
+      />
+    {:else}
+      <!-- Wipe: B full, A clipped over B -->
+      <ComparisonScene
+        asset={assetB}
+        imageUrl={sideB.url}
+        {camera}
+        {viewport}
+        worldScale={scaleB}
+        loading={sideB.loading}
+        error={sideB.error}
+        label="B"
+      />
 
-    <WipeDivider
-      position={wipe}
-      viewportWidth={viewport.width}
-      {viewport}
-    />
+      <div
+        class="clip-a"
+        style:--wipe-percent="{wipePercent}%"
+        data-testid="clip-a"
+      >
+        <ComparisonScene
+          asset={assetA}
+          imageUrl={sideA.url}
+          {camera}
+          {viewport}
+          worldScale={scaleA}
+          loading={sideA.loading}
+          error={sideA.error}
+          label="A"
+        />
+      </div>
+
+      <WipeDivider
+        position={wipe}
+        viewportWidth={viewport.width}
+        {viewport}
+      />
+    {/if}
 
     <div class="labels" aria-hidden="true">
-      <span class="label-a" data-testid="label-a"
-        >A · {assetA?.name ?? '—'}</span
-      >
-      <span class="label-b" data-testid="label-b"
-        >B · {assetB?.name ?? '—'}</span
-      >
+      {#if viewMode === 'full-a'}
+        <span class="label-a" data-testid="label-a"
+          >A · {assetA?.name ?? '—'}</span
+        >
+      {:else if viewMode === 'full-b'}
+        <span class="label-b" data-testid="label-b"
+          >B · {assetB?.name ?? '—'}</span
+        >
+      {:else}
+        <span class="label-a" data-testid="label-a"
+          >A · {assetA?.name ?? '—'}</span
+        >
+        <span class="label-b" data-testid="label-b"
+          >B · {assetB?.name ?? '—'}</span
+        >
+      {/if}
     </div>
   {:else}
     <div class="empty-vp">Measuring viewport…</div>

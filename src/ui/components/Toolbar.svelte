@@ -2,12 +2,14 @@
   import type {
     SizeNormBasis,
     SizeNormReference,
+    ViewMode,
     ViewportSize,
     Workspace,
   } from '../../domain/model';
   import {
     SIZE_NORM_BASES,
     SIZE_NORM_REFERENCES,
+    VIEW_MODES,
   } from '../../domain/model';
   import { zoomPercent } from '../../domain/camera';
   import {
@@ -19,6 +21,8 @@
     withSizeNormReference,
   } from '../../domain/sizeNormalization';
   import {
+    viewModeDescription,
+    viewModeLabel,
     wipeLockDescription,
     wipeLockLabel,
   } from '../../domain/wipe';
@@ -46,10 +50,15 @@
   const canFolder = supportsDirectoryPicker() || supportsWebkitDirectory();
   const sizeNorm = $derived(workspace.sizeNormalization);
   const wipeLock = $derived(workspace.comparison.lock);
+  const viewMode = $derived(workspace.comparison.viewMode);
   const refDisabled = $derived(sizeNorm.basis === 'native');
 
   function fit() {
     controller.fit(viewport);
+  }
+
+  function setView(mode: ViewMode) {
+    controller.setViewMode(mode);
   }
 
   function onBasisChange(e: Event) {
@@ -100,17 +109,15 @@
       <button
         type="button"
         class="btn"
-        aria-haspopup="menu"
         aria-expanded={addOpen}
         onclick={() => (addOpen = !addOpen)}
       >
         Add…
       </button>
       {#if addOpen}
-        <div class="menu" role="menu">
+        <div class="menu">
           <button
             type="button"
-            role="menuitem"
             onclick={() => {
               fileInput?.click();
               addOpen = false;
@@ -119,7 +126,7 @@
             Add Images
           </button>
           {#if canFolder}
-            <button type="button" role="menuitem" onclick={addFolder}>
+            <button type="button" onclick={addFolder}>
               Add Folder
             </button>
           {/if}
@@ -137,6 +144,27 @@
   </div>
 
   <div class="group">
+    <div
+      class="seg"
+      role="radiogroup"
+      aria-label="View mode"
+      data-testid="view-mode"
+    >
+      {#each VIEW_MODES as mode}
+        <button
+          type="button"
+          class="btn seg-btn"
+          class:active={viewMode === mode}
+          role="radio"
+          aria-checked={viewMode === mode}
+          data-testid={`view-mode-${mode}`}
+          title={viewModeDescription(mode)}
+          onclick={() => setView(mode)}
+        >
+          {viewModeLabel(mode)}
+        </button>
+      {/each}
+    </div>
     <button
       type="button"
       class="btn"
@@ -292,6 +320,34 @@
   .btn.active-toggle {
     border-color: var(--accent-dim);
     color: var(--accent);
+  }
+
+  .seg {
+    display: inline-flex;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .seg-btn {
+    border: none;
+    border-radius: 0;
+    border-right: 1px solid var(--border);
+    min-width: 36px;
+    background: var(--bg);
+  }
+
+  .seg-btn:last-child {
+    border-right: none;
+  }
+
+  .seg-btn.active {
+    background: var(--selected);
+    color: var(--accent);
+  }
+
+  .seg-btn:hover:not(.active) {
+    background: #1c2026;
   }
 
   .zoom-pct {

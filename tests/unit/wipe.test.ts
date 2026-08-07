@@ -4,6 +4,7 @@ import {
   displayWipePosition,
   setWipeFromViewportPosition,
   setWipeLock,
+  setViewMode,
   defaultComparison,
 } from '../../src/domain/wipe';
 import { emptyWorkspace } from '../../src/domain/workspaceTransitions';
@@ -15,6 +16,7 @@ function workspaceWithCamera(): Workspace {
     camera: { centerX: 0, centerY: 0, scale: 1 },
     comparison: {
       kind: 'wipe',
+      viewMode: 'wipe',
       lock: 'world',
       position: 0.5,
       worldX: 0,
@@ -25,11 +27,31 @@ function workspaceWithCamera(): Workspace {
 const viewport = { width: 200, height: 100 };
 
 describe('wipe lock', () => {
-  it('defaults to world lock at center', () => {
+  it('defaults to world lock at center and wipe view mode', () => {
     const c = defaultComparison();
     expect(c.lock).toBe('world');
+    expect(c.viewMode).toBe('wipe');
     expect(c.position).toBe(0.5);
     expect(c.worldX).toBe(0);
+  });
+
+  it('setViewMode does not alter wipe position or camera', () => {
+    let w = workspaceWithCamera();
+    w = setWipeFromViewportPosition(w, 0.3, viewport);
+    const cam = w.camera;
+    const pos = w.comparison.position;
+    const worldX = w.comparison.worldX;
+    w = setViewMode(w, 'full-a');
+    expect(w.comparison.viewMode).toBe('full-a');
+    expect(w.comparison.position).toBe(pos);
+    expect(w.comparison.worldX).toBe(worldX);
+    expect(w.camera).toBe(cam);
+    w = setViewMode(w, 'full-b');
+    expect(w.comparison.viewMode).toBe('full-b');
+    expect(w.comparison.position).toBe(pos);
+    w = setViewMode(w, 'wipe');
+    expect(w.comparison.viewMode).toBe('wipe');
+    expect(w.comparison.position).toBe(pos);
   });
 
   it('world lock: zoom preserves worldX; display position changes', () => {

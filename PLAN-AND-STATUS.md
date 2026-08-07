@@ -2,11 +2,11 @@
 
 **Audience:** humans and coding agents continuing this work (deploy, QA, review, fixups).
 
-**Last updated:** 2026-08-06  
-**Branch:** `main` @ `5ed4de3` — *Build image comparison workbench v0*  
+**Last updated:** 2026-08-07
+**Branch:** `main` @ `315a18f` with local deploy/review changes
 **Local path:** `/Users/burlapcalhoun/git_repos/image-compare-workbench`  
 **GitHub (private):** https://github.com/whiddershins/image-compare-workbench  
-**Cloudflare Pages URL:** *not deployed yet*
+**Permanent Cloudflare Workers URL:** *not deployed yet*
 
 This document is the handoff. The product README is for end users; this file is for implementers.
 
@@ -28,12 +28,12 @@ Full original v0 specification lived in the implementing agent’s prompt (Image
 | Domain layer (pure TS) | **Done** | See `src/domain/` |
 | Browser shell (import, decode, thumbs, registry) | **Done** | See `src/infrastructure/`, `src/application/` |
 | UI (empty drop, rails, viewport, wipe, toolbar) | **Done** | See `src/ui/`, `src/App.svelte` |
-| Unit tests (Vitest) | **Done** | 36 tests, all green at commit |
-| E2E (Playwright / Chromium) | **Done** | 5 tests, all green at commit |
+| Unit tests (Vitest) | **Done** | 54 tests, green on 2026-08-07 |
+| E2E (Playwright / Chromium) | **Done** | 7 tests, green on 2026-08-07 |
 | CI (GitHub Actions) | **Done** | `.github/workflows/ci.yml` |
 | README | **Done** | User-facing |
 | GitHub private remote + push | **Done** | `origin` → whiddershins/image-compare-workbench |
-| Cloudflare Pages deploy | **Not done** | No CF auth in implementing session |
+| Cloudflare Workers POC | **Verified** | Temporary preview smoke-tested; permanent deploy pending auth |
 | Manual Safari / Firefox | **Not done** | Only Chromium via Playwright |
 | Manual folder-picker / folder-drag | **Not done** | Code present; not verified by hand |
 | Transparent-pixel visual e2e | **Partial** | Compositor implements checkerboard; no pixel assertion in Playwright |
@@ -43,8 +43,8 @@ Full original v0 specification lived in the implementing agent’s prompt (Image
 
 ```bash
 npm run check    # svelte-check + tsc
-npm run test     # vitest (36)
-npm run test:e2e # playwright chromium (5)
+npm run test     # vitest (54)
+npm run test:e2e # playwright chromium (7)
 npm run build    # dist/
 ```
 
@@ -117,42 +117,43 @@ Transparent A must show A’s checkerboard, not B.
 
 ### Quality gates in repo
 
-- `package.json` scripts: `dev`, `build`, `preview`, `check`, `test`, `test:e2e`
-- `.nvmrc` → `22`; `engines.node` ≥ 22
-- CI: `npm ci` → check → test → build → Playwright chromium
+- `package.json` scripts: `dev`, `build`, `preview`, `check`, `test`, `test:e2e`, `verify`, Cloudflare preview/deploy
+- `.nvmrc` → `22`; `engines.node` accepts Node 22.12+ or 24+
+- CI: `npm ci` → check → test → build + Wrangler dry run → Playwright chromium
 
 ---
 
 ## 5. Open work for other agents
 
-### P0 — Cloudflare Pages deploy
+### P0 — Cloudflare Workers first deploy
 
-**Goal:** Live static site from this private GitHub repo.
+**Goal:** Permanent live assets-only Worker from this private GitHub repo.
 
 **Settings (normative):**
 
 | Setting | Value |
 |---------|--------|
-| Build command | `npm run build` |
-| Build output directory | `dist` |
+| Wrangler config | `wrangler.jsonc` |
+| Build command | `npm run verify` |
+| Deploy command | `npx wrangler deploy` |
+| Assets directory | `dist` |
 | Root directory | `/` (repo root) |
 | Env vars | none |
-| Framework preset | Vite (or None) |
 
 **Suggested steps:**
 
-1. Confirm auth: `wrangler whoami` or Cloudflare dashboard login for the target account.
-2. Create Pages project linked to `whiddershins/image-compare-workbench` (or deploy via wrangler):
+1. Confirm auth: `npx wrangler whoami`, or authenticate with `npx wrangler login`.
+2. Validate and deploy the checked-in configuration:
    ```bash
-   # Example if using Wrangler + direct upload after build:
-   npm ci && npm run build
-   npx wrangler pages project create image-compare-workbench --production-branch main
-   npx wrangler pages deploy dist --project-name=image-compare-workbench
+   npm ci
+   npm run verify
+   npm run deploy
    ```
-   Prefer Git-connected project so pushes to `main` auto-deploy.
+   For automatic deploys, connect the repository with Workers Builds using the settings above.
 3. After first deploy, record production URL in this file and README.
 4. Smoke: open URL, import local images, confirm no network POSTs of image bytes (DevTools).
-5. Do **not** add Workers, Functions, or a second deploy path (e.g. GitHub Pages) in v0.
+5. Do **not** create a separate Pages project. Add a Worker handler or Durable Objects only when the
+   AI bridge has a concrete API contract.
 
 **When done, update:**
 
@@ -319,7 +320,7 @@ tests/e2e/                 # Playwright + PNG fixtures
 
 1. Read §5 P0.  
 2. Authenticate Cloudflare.  
-3. Deploy or connect Git; get URL.  
+3. Run `npm run deploy` or connect Workers Builds; get URL.
 4. Smoke import on production.  
 5. Update §2 table + Cloudflare URL in this file and commit.  
 
@@ -346,10 +347,10 @@ If the feature is in §5 “Out of scope”, refuse or escalate unless product o
 ## 10. Commit / remote state at handoff
 
 ```text
-Commit:  5ed4de3 Build image comparison workbench v0
+Commit:  315a18f Orthogonal size norm; cross-rail muted thumbs swap A/B
 Branch:  main
 Remote:  origin = https://github.com/whiddershins/image-compare-workbench.git
-Tree:    clean after initial commit (update this section when you change it)
+Tree:    local Cloudflare POC and review changes pending
 ```
 
 When you land deploy or QA, append a short **Changelog** subsection below rather than deleting history.
@@ -360,3 +361,10 @@ When you land deploy or QA, append a short **Changelog** subsection below rather
 - **2026-08-06** — **Size normalization modes** added (post-v0): toolbar control for `native` | `equal-height` | `equal-width` | `equal-max-edge` | `match-a` | `match-b`. Per-image uniform scale into shared world space so same-composition different-resolution frames can overlay. Domain: `src/domain/sizeNormalization.ts`; mode on `Workspace.sizeNormalization`. Changing mode refits pair; selection still does not move camera. Not full registration/alignment.
 - **2026-08-06** — **Wipe lock** default `world` (image-fixed through zoom/pan); toggle to `viewport` (screen-fixed). Follow-on noted for browser drag-selection UX (P4, undecided).
 - **2026-08-06** — Size norm split into orthogonal **basis × reference**. Cross-rail muted thumbs (opacity 50%) for image selected on the other side; click swaps A/B. Toolbar **⇄ Swap** kept.
+- **2026-08-07** — View mode segment **A | Wipe | B** (full A / wipe / full B). Sticky, mutually exclusive; wipe geometry preserved across mode switches.
+- **2026-08-07** — Added an assets-only Cloudflare Worker POC with project-local Wrangler, SPA fallback,
+  local preview, dry-run validation, and deploy scripts. Temporary deploy verified; permanent deploy
+  remains pending auth.
+- **2026-08-07** — Quality pass serialized imports, fixed empty-state import feedback and keyboard
+  routing, tightened modal/a11y behavior and thumbnail invalidation, removed unused test dependencies,
+  and expanded typechecking to test/config code.

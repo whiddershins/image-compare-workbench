@@ -199,4 +199,34 @@ test.describe('core comparison invariant', () => {
       expect(Math.max(s.nw, s.nh)).toBeLessThanOrEqual(256);
     }
   });
+
+  test('empty-state imports report unsupported files', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('input[type="file"]').first().setInputFiles({
+      name: 'notes.txt',
+      mimeType: 'text/plain',
+      buffer: Buffer.from('not an image'),
+    });
+
+    await expect(page.getByText('1 unsupported')).toBeVisible();
+    await expect(page.getByText('Drop images or a folder here')).toBeVisible();
+  });
+
+  test('focused controls keep native keys and help closes with Escape', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await importImages(page, fixtureFiles(2));
+
+    const clear = page.getByTestId('clear-btn');
+    await clear.focus();
+    await page.keyboard.press('Space');
+    await expect(page.getByText('Drop images or a folder here')).toBeVisible();
+
+    await page.keyboard.press('?');
+    const help = page.getByRole('dialog', { name: 'Keyboard shortcuts' });
+    await expect(help).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(help).toBeHidden();
+  });
 });

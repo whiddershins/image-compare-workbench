@@ -2,10 +2,11 @@ import type {
   CameraState,
   ComparisonState,
   ViewportSize,
+  ViewMode,
   WipeLock,
   Workspace,
 } from './model';
-import { DEFAULT_WIPE, DEFAULT_WIPE_LOCK } from './model';
+import { DEFAULT_VIEW_MODE, DEFAULT_WIPE, DEFAULT_WIPE_LOCK } from './model';
 import { screenToWorld, worldToScreen } from './geometry';
 
 export function clampWipePosition(position: number): number {
@@ -16,10 +17,50 @@ export function clampWipePosition(position: number): number {
 export function defaultComparison(): ComparisonState {
   return {
     kind: 'wipe',
+    viewMode: DEFAULT_VIEW_MODE,
     lock: DEFAULT_WIPE_LOCK,
     position: DEFAULT_WIPE,
     worldX: 0,
   };
+}
+
+/**
+ * Sticky view mode. Does not alter wipe position, lock, camera, or selection.
+ */
+export function setViewMode(
+  workspace: Workspace,
+  viewMode: ViewMode,
+): Workspace {
+  if (workspace.comparison.viewMode === viewMode) return workspace;
+  return {
+    ...workspace,
+    comparison: {
+      ...workspace.comparison,
+      viewMode,
+    },
+  };
+}
+
+export function viewModeLabel(mode: ViewMode): string {
+  switch (mode) {
+    case 'full-a':
+      return 'A';
+    case 'wipe':
+      return 'Wipe';
+    case 'full-b':
+      return 'B';
+  }
+}
+
+export function viewModeDescription(mode: ViewMode): string {
+  switch (mode) {
+    case 'full-a':
+      return 'Full A only (same camera). Wipe position is kept for when you return to Wipe.';
+    case 'wipe':
+      return 'A/B wipe composite (default compare view).';
+    case 'full-b':
+      return 'Full B only (same camera). Wipe position is kept for when you return to Wipe.';
+  }
 }
 
 /**
@@ -70,8 +111,8 @@ export function setWipeFromViewportPosition(
   return {
     ...workspace,
     comparison: {
+      ...workspace.comparison,
       kind: 'wipe',
-      lock: workspace.comparison.lock,
       position: clamped,
       worldX,
     },
@@ -109,6 +150,7 @@ export function setWipeLock(
   return {
     ...workspace,
     comparison: {
+      ...workspace.comparison,
       kind: 'wipe',
       lock,
       position,

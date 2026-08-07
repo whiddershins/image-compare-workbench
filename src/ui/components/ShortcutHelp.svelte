@@ -4,6 +4,17 @@
     onclose: () => void;
   }
   let { open, onclose }: Props = $props();
+  let dialogEl: HTMLDivElement | undefined = $state();
+
+  $effect(() => {
+    if (!open || !dialogEl) return;
+    const previousFocus =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    dialogEl.focus();
+    return () => previousFocus?.focus();
+  });
 
   function onKey(e: KeyboardEvent) {
     if (e.key === 'Escape') onclose();
@@ -13,6 +24,7 @@
 {#if open}
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <div
+    bind:this={dialogEl}
     class="backdrop"
     role="dialog"
     aria-modal="true"
@@ -34,6 +46,7 @@
         <div><dt>A / B</dt><dd>Activate side A or B</dd></div>
         <div><dt>↑ / ↓</dt><dd>Previous / next image on active side</dd></div>
         <div><dt>S</dt><dd>Swap A and B</dd></div>
+        <div><dt>View A / Wipe / B</dt><dd>Toolbar: full A, wipe, or full B</dd></div>
         <div><dt>F</dt><dd>Fit current pair</dd></div>
         <div><dt>0</dt><dd>100% zoom</dd></div>
         <div><dt>− / =</dt><dd>Zoom out / in</dd></div>
@@ -53,6 +66,12 @@
         An image already selected on the other side appears muted (50%). Click it
         to <strong>swap A and B</strong>. Toolbar <strong>⇄ Swap</strong> does the
         same (shortcut S).
+      </p>
+      <h3>View mode</h3>
+      <p class="note">
+        Segmented control <strong>A | Wipe | B</strong>: full A only, wipe composite
+        (default), or full B only. Same camera throughout. Switching modes does not
+        move the wipe; return to Wipe to pick up the same divider.
       </p>
       <h3>Wipe lock</h3>
       <p class="note">

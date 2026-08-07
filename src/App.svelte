@@ -27,8 +27,9 @@
     workspace = controller.getWorkspace();
     const unsubs = [
       controller.subscribe((w) => {
+        const resourcesChanged = w.imageSet.assets !== workspace.imageSet.assets;
         workspace = w;
-        resourceVersion += 1;
+        if (resourcesChanged) resourceVersion += 1;
       }),
       controller.subscribeLoading((v) => {
         importing = v;
@@ -44,36 +45,36 @@
       }),
     ];
 
-    function isTypingTarget(t: EventTarget | null): boolean {
+    function isInteractiveTarget(t: EventTarget | null): boolean {
       if (!(t instanceof HTMLElement)) return false;
-      const tag = t.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
-      if (t.isContentEditable) return true;
-      return false;
+      return (
+        t.isContentEditable ||
+        t.matches('button, a[href], input, textarea, select, [role="slider"]')
+      );
     }
 
     function onKeyDown(e: KeyboardEvent) {
-      if (isTypingTarget(e.target)) return;
+      if (helpOpen) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          helpOpen = false;
+        }
+        return;
+      }
+
+      if (
+        e.metaKey ||
+        e.ctrlKey ||
+        e.altKey ||
+        isInteractiveTarget(e.target)
+      ) {
+        return;
+      }
 
       if (e.key === ' ' && !e.repeat) {
         spaceHeld = true;
         // Prevent page scroll
         if (loaded) e.preventDefault();
-      }
-
-      // Wipe slider owns arrows when focused
-      if (
-        e.target instanceof HTMLElement &&
-        e.target.getAttribute('role') === 'slider'
-      ) {
-        if (
-          e.key === 'ArrowLeft' ||
-          e.key === 'ArrowRight' ||
-          e.key === 'Home' ||
-          e.key === 'End'
-        ) {
-          return;
-        }
       }
 
       if (!loaded) {
@@ -160,12 +161,6 @@
     };
   });
 
-  // Track viewport from ResizeObserver in CompareViewport via fit calls;
-  // also keep a reasonable default for keyboard Fit before measure.
-  $effect(() => {
-    // Observe center column size for keyboard Fit
-    void workspace;
-  });
 </script>
 
 <div class="app-root">
@@ -195,6 +190,9 @@
       </div>
       <ImageRail side="b" {workspace} {resourceVersion} />
     </div>
+  {/if}
+
+  {#if loaded || importing || summaryText || errorText}
     <div class="status-bar">
       <ImportSummary text={summaryText} />
       {#if importing}
@@ -203,10 +201,12 @@
       {#if errorText}
         <span class="error" role="alert">{errorText}</span>
       {/if}
-      <span style="margin-left:auto;color:var(--text-faint)">
-        Active: {workspace.selection.activeSide.toUpperCase()} · {workspace
-          .imageSet.assets.length} images
-      </span>
+      {#if loaded}
+        <span style="margin-left:auto;color:var(--text-faint)">
+          Active: {workspace.selection.activeSide.toUpperCase()} · {workspace
+            .imageSet.assets.length} images
+        </span>
+      {/if}
     </div>
   {/if}
 

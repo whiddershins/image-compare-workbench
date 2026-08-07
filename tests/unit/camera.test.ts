@@ -119,6 +119,12 @@ describe('camera geometry', () => {
 function setWipePositionPreserve(w: Workspace, position: number): Workspace {
   return {
     ...w,
-    comparison: { kind: 'wipe', lock: 'world', position, worldX: 0 },
+    comparison: {
+      kind: 'wipe',
+      viewMode: 'wipe',
+      lock: 'world',
+      position,
+      worldX: 0,
+    },
   };
 }

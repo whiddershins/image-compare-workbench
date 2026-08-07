@@ -10,6 +10,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+.wrangler
 *.local
 
 # Editor
@@ -32,3 +33,5 @@ playwright/.cache
 # Env
 .env
 .env.*
+.dev.vars
+.dev.vars.*
