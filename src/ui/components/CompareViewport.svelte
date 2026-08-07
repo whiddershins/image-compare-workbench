@@ -28,6 +28,7 @@
   const effectiveView = $derived(
     peekingB ? 'full-b' : workspace.comparison.viewMode,
   );
+  const wipeAxis = $derived(workspace.comparison.axis);
   /** On-screen wipe fraction (world-lock derives from camera each frame). */
   const wipe = $derived(
     displayWipePosition(workspace.comparison, workspace.camera, viewport),
@@ -195,8 +196,11 @@
 
       <div
         class="clip-a"
+        class:axis-vertical={wipeAxis === 'vertical'}
+        class:axis-horizontal={wipeAxis === 'horizontal'}
         style:--wipe-percent="{wipePercent}%"
         data-testid="clip-a"
+        data-axis={wipeAxis}
       >
         <ComparisonScene
           asset={assetA}
@@ -210,11 +214,7 @@
         />
       </div>
 
-      <WipeDivider
-        position={wipe}
-        viewportWidth={viewport.width}
-        {viewport}
-      />
+      <WipeDivider position={wipe} axis={wipeAxis} {viewport} />
     {/if}
 
     <div class="labels" aria-hidden="true">
@@ -254,10 +254,18 @@
   .clip-a {
     position: absolute;
     inset: 0;
-    /* position 0 → all B (clip A to nothing on the right); position 1 → all A */
-    clip-path: inset(0 calc(100% - var(--wipe-percent)) 0 0);
     z-index: 2;
     pointer-events: none;
+  }
+
+  /* vertical: A left of divider — clip from the right */
+  .clip-a.axis-vertical {
+    clip-path: inset(0 calc(100% - var(--wipe-percent)) 0 0);
+  }
+
+  /* horizontal: A above divider — clip from the bottom */
+  .clip-a.axis-horizontal {
+    clip-path: inset(0 0 calc(100% - var(--wipe-percent)) 0);
   }
 
   .clip-a :global(.scene) {

@@ -4,6 +4,7 @@ import {
   displayWipePosition,
   setWipeFromViewportPosition,
   setWipeLock,
+  setWipeAxis,
   setViewMode,
   defaultComparison,
 } from '../../src/domain/wipe';
@@ -17,9 +18,11 @@ function workspaceWithCamera(): Workspace {
     comparison: {
       kind: 'wipe',
       viewMode: 'wipe',
+      axis: 'vertical',
       lock: 'world',
       position: 0.5,
       worldX: 0,
+      worldY: 0,
     },
   };
 }
@@ -27,12 +30,14 @@ function workspaceWithCamera(): Workspace {
 const viewport = { width: 200, height: 100 };
 
 describe('wipe lock', () => {
-  it('defaults to world lock at center and wipe view mode', () => {
+  it('defaults to vertical world lock at center and wipe view mode', () => {
     const c = defaultComparison();
     expect(c.lock).toBe('world');
+    expect(c.axis).toBe('vertical');
     expect(c.viewMode).toBe('wipe');
     expect(c.position).toBe(0.5);
     expect(c.worldX).toBe(0);
+    expect(c.worldY).toBe(0);
   });
 
   it('setViewMode only toggles sticky Full A / Wipe; keeps wipe geometry', () => {
@@ -126,5 +131,38 @@ describe('wipe lock', () => {
     expect(w.comparison.position).toBe(0);
     w = setWipeFromViewportPosition(w, 2, viewport);
     expect(w.comparison.position).toBe(1);
+  });
+
+  it('horizontal world lock preserves worldY across zoom', () => {
+    let w = workspaceWithCamera();
+    w = setWipeAxis(w, 'horizontal', viewport);
+    // pos 0.6 → screenY = 60; center 0 scale 1 → worldY = 60 - 50 = 10
+    w = setWipeFromViewportPosition(w, 0.6, viewport);
+    expect(w.comparison.axis).toBe('horizontal');
+    expect(w.comparison.worldY).toBeCloseTo(10);
+
+    const zoomedCam = zoomAtScreenPoint(
+      w.camera!,
+      viewport,
+      { x: 100, y: 50 },
+      2,
+    );
+    w = { ...w, camera: zoomedCam };
+    expect(w.comparison.worldY).toBeCloseTo(10);
+    // screenY = 50 + 10 * 2 = 70 → 0.7
+    expect(
+      displayWipePosition(w.comparison, w.camera, viewport),
+    ).toBeCloseTo(0.7);
+  });
+
+  it('switching axis preserves on-screen fraction', () => {
+    let w = workspaceWithCamera();
+    w = setWipeFromViewportPosition(w, 0.3, viewport);
+    const before = displayWipePosition(w.comparison, w.camera, viewport);
+    w = setWipeAxis(w, 'horizontal', viewport);
+    expect(displayWipePosition(w.comparison, w.camera, viewport)).toBeCloseTo(
+      before,
+    );
+    expect(w.comparison.axis).toBe('horizontal');
   });
 });

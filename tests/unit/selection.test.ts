@@ -147,9 +147,11 @@ describe('selection', () => {
       comparison: {
         kind: 'wipe',
         viewMode: 'wipe',
+        axis: 'vertical',
         lock: 'world',
         position: 0.3,
         worldX: 0,
+        worldY: 0,
       },
     };
     const cameraBefore = w.camera;
@@ -172,9 +174,11 @@ describe('selection', () => {
       comparison: {
         kind: 'wipe',
         viewMode: 'wipe',
+        axis: 'vertical',
         lock: 'world',
         position: 0.7,
         worldX: 0,
+        worldY: 0,
       },
     };
     const cameraBefore = w.camera;

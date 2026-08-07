@@ -116,14 +116,15 @@ If an image is selected as A, it appears **muted on the B rail** (and vice versa
 
 Hold **V** or the **B tap** button. Same shared camera; wipe geometry is unchanged by B tap.
 
-## Wipe lock
+## Wipe axis & lock
 
-| Mode | Toolbar | Behavior |
-|------|---------|----------|
-| Image (default) | **Wipe img** | Divider stays on the same world/image X through pan and zoom |
-| Screen | **Wipe scr** | Divider stays fixed in the viewport; content slides under it |
+| Control | Options | Behavior |
+|---------|---------|----------|
+| **V / H** | Vertical (default) / Horizontal | V: A left, B right. H: A above, B below. 0 = all B, 1 = all A |
+| **Wipe img** (default) | Image lock | Divider tracks world position through pan/zoom |
+| **Wipe scr** | Screen lock | Divider fixed in viewport |
 
-Original v0 was screen-fixed only; image-locked is now the default for inspection.
+Original v0 was vertical + screen-fixed only.
 
 ## Keyboard
 

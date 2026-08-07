@@ -6,6 +6,7 @@ import type {
   ViewportSize,
   EffectiveView,
   ViewMode,
+  WipeAxis,
   WipeLock,
   Workspace,
 } from '../domain/model';
@@ -21,6 +22,7 @@ import {
 } from '../domain/workspaceTransitions';
 import {
   setViewMode,
+  setWipeAxis,
   setWipeFromViewportPosition,
   setWipeLock,
 } from '../domain/wipe';
@@ -355,6 +357,10 @@ export class WorkspaceController {
 
   setWipeLock(lock: WipeLock, viewport: ViewportSize): void {
     this.setWorkspace(setWipeLock(this.workspace, lock, viewport));
+  }
+
+  setWipeAxis(axis: WipeAxis, viewport: ViewportSize): void {
+    this.setWorkspace(setWipeAxis(this.workspace, axis, viewport));
   }
 
   setViewMode(mode: ViewMode): void {

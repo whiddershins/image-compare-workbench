@@ -3,10 +3,16 @@ import type {
   ComparisonState,
   ViewportSize,
   ViewMode,
+  WipeAxis,
   WipeLock,
   Workspace,
 } from './model';
-import { DEFAULT_VIEW_MODE, DEFAULT_WIPE, DEFAULT_WIPE_LOCK } from './model';
+import {
+  DEFAULT_VIEW_MODE,
+  DEFAULT_WIPE,
+  DEFAULT_WIPE_AXIS,
+  DEFAULT_WIPE_LOCK,
+} from './model';
 import { screenToWorld, worldToScreen } from './geometry';
 
 export function clampWipePosition(position: number): number {
@@ -18,9 +24,11 @@ export function defaultComparison(): ComparisonState {
   return {
     kind: 'wipe',
     viewMode: DEFAULT_VIEW_MODE,
+    axis: DEFAULT_WIPE_AXIS,
     lock: DEFAULT_WIPE_LOCK,
     position: DEFAULT_WIPE,
     worldX: 0,
+    worldY: 0,
   };
 }
 
@@ -64,8 +72,7 @@ export const B_TAP_DESCRIPTION =
 
 /**
  * Viewport-normalized wipe position used for clip-path and the divider.
- * When lock is 'world', derived from camera so the line tracks a fixed world X.
- * When lock is 'viewport', uses stored position (screen-fixed through zoom/pan).
+ * World lock uses worldX (vertical axis) or worldY (horizontal axis).
  */
 export function displayWipePosition(
   comparison: ComparisonState,
@@ -81,6 +88,14 @@ export function displayWipePosition(
     return clampWipePosition(comparison.position);
   }
 
+  if (comparison.axis === 'horizontal') {
+    const screen = worldToScreen(camera, viewport, {
+      x: camera.centerX,
+      y: comparison.worldY,
+    });
+    return clampWipePosition(screen.y / viewport.height);
+  }
+
   const screen = worldToScreen(camera, viewport, {
     x: comparison.worldX,
     y: camera.centerY,
@@ -90,7 +105,7 @@ export function displayWipePosition(
 
 /**
  * Set wipe from a viewport-normalized position (drag / keyboard).
- * Always updates both position and worldX so lock mode can switch without a jump.
+ * Updates position and the world coord for the active axis.
  */
 export function setWipeFromViewportPosition(
   workspace: Workspace,
@@ -99,12 +114,21 @@ export function setWipeFromViewportPosition(
 ): Workspace {
   const clamped = clampWipePosition(position);
   let worldX = workspace.comparison.worldX;
+  let worldY = workspace.comparison.worldY;
+  const axis = workspace.comparison.axis;
 
   if (workspace.camera && viewport.width > 0 && viewport.height > 0) {
-    worldX = screenToWorld(workspace.camera, viewport, {
-      x: clamped * viewport.width,
-      y: viewport.height / 2,
-    }).x;
+    if (axis === 'horizontal') {
+      worldY = screenToWorld(workspace.camera, viewport, {
+        x: viewport.width / 2,
+        y: clamped * viewport.height,
+      }).y;
+    } else {
+      worldX = screenToWorld(workspace.camera, viewport, {
+        x: clamped * viewport.width,
+        y: viewport.height / 2,
+      }).x;
+    }
   }
 
   return {
@@ -114,6 +138,7 @@ export function setWipeFromViewportPosition(
       kind: 'wipe',
       position: clamped,
       worldX,
+      worldY,
     },
   };
 }
@@ -131,19 +156,26 @@ export function setWipeLock(
   const camera = workspace.camera;
   let position = clampWipePosition(workspace.comparison.position);
   let worldX = workspace.comparison.worldX;
+  let worldY = workspace.comparison.worldY;
 
   if (camera && viewport.width > 0 && viewport.height > 0) {
-    // Current visual location in the mode we're leaving
     const currentDisplay = displayWipePosition(
       workspace.comparison,
       camera,
       viewport,
     );
     position = currentDisplay;
-    worldX = screenToWorld(camera, viewport, {
-      x: currentDisplay * viewport.width,
-      y: viewport.height / 2,
-    }).x;
+    if (workspace.comparison.axis === 'horizontal') {
+      worldY = screenToWorld(camera, viewport, {
+        x: viewport.width / 2,
+        y: currentDisplay * viewport.height,
+      }).y;
+    } else {
+      worldX = screenToWorld(camera, viewport, {
+        x: currentDisplay * viewport.width,
+        y: viewport.height / 2,
+      }).x;
+    }
   }
 
   return {
@@ -154,6 +186,56 @@ export function setWipeLock(
       lock,
       position,
       worldX,
+      worldY,
+    },
+  };
+}
+
+/**
+ * Set wipe axis (vertical | horizontal). Preserves on-screen wipe fraction
+ * and updates the world coord for the new axis.
+ */
+export function setWipeAxis(
+  workspace: Workspace,
+  axis: WipeAxis,
+  viewport: ViewportSize,
+): Workspace {
+  if (workspace.comparison.axis === axis) return workspace;
+
+  const camera = workspace.camera;
+  let position = clampWipePosition(workspace.comparison.position);
+  let worldX = workspace.comparison.worldX;
+  let worldY = workspace.comparison.worldY;
+
+  // Keep current on-screen fraction when flipping axis
+  if (camera && viewport.width > 0 && viewport.height > 0) {
+    position = displayWipePosition(
+      workspace.comparison,
+      camera,
+      viewport,
+    );
+    if (axis === 'horizontal') {
+      worldY = screenToWorld(camera, viewport, {
+        x: viewport.width / 2,
+        y: position * viewport.height,
+      }).y;
+    } else {
+      worldX = screenToWorld(camera, viewport, {
+        x: position * viewport.width,
+        y: viewport.height / 2,
+      }).x;
+    }
+  }
+
+  return {
+    ...workspace,
+    comparison: {
+      ...workspace.comparison,
+      kind: 'wipe',
+      axis,
+      position,
+      worldX,
+      worldY,
     },
   };
 }
@@ -164,7 +246,18 @@ export function wipeLockLabel(lock: WipeLock): string {
 
 export function wipeLockDescription(lock: WipeLock): string {
   if (lock === 'world') {
-    return 'Wipe stays on the same world/image X through pan and zoom (default).';
+    return 'Wipe stays on the same world/image position through pan and zoom (default).';
   }
   return 'Wipe stays fixed in the viewport; image content slides under it.';
+}
+
+export function wipeAxisLabel(axis: WipeAxis): string {
+  return axis === 'vertical' ? 'V' : 'H';
+}
+
+export function wipeAxisDescription(axis: WipeAxis): string {
+  if (axis === 'vertical') {
+    return 'Vertical wipe: A left of the divider, B right. Position 0 = all B, 1 = all A.';
+  }
+  return 'Horizontal wipe: A above the divider, B below. Position 0 = all B, 1 = all A.';
 }

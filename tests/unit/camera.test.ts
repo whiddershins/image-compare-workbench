@@ -122,9 +122,11 @@ function setWipePositionPreserve(w: Workspace, position: number): Workspace {
     comparison: {
       kind: 'wipe',
       viewMode: 'wipe',
+      axis: 'vertical',
       lock: 'world',
       position,
       worldX: 0,
+      worldY: 0,
     },
   };
 }

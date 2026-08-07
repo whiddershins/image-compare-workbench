@@ -40,10 +40,18 @@ export interface CameraState {
 
 /**
  * Where the wipe plane is anchored.
- * - world: fixed world X (same place on the images through pan/zoom) — default
- * - viewport: fixed screen fraction (original v0; content slides under the line)
+ * - world: fixed world coordinate along the wipe axis (default)
+ * - viewport: fixed screen fraction (content slides under the line)
  */
 export type WipeLock = 'world' | 'viewport';
+
+/**
+ * Wipe divider orientation.
+ * - vertical: A left of divider, B right (default)
+ * - horizontal: A above divider, B below
+ * position 0 = all B, 1 = all A in both cases.
+ */
+export type WipeAxis = 'vertical' | 'horizontal';
 
 /**
  * Sticky presentation of A/B (toolbar: Full A | Wipe).
@@ -64,20 +72,26 @@ export type EffectiveView = ViewMode | 'full-b';
 export type ComparisonState = {
   readonly kind: 'wipe';
   readonly viewMode: ViewMode;
+  readonly axis: WipeAxis;
   readonly lock: WipeLock;
   /**
-   * Normalized viewport X coordinate (0 = all B, 1 = all A).
-   * Authoritative when lock is 'viewport'. When lock is 'world', this is a
-   * cache of the last drag position; display is derived from worldX + camera.
+   * Normalized fraction along the wipe axis (0 = all B, 1 = all A).
+   * Authoritative when lock is 'viewport'. When lock is 'world', cache of
+   * last drag; display is derived from worldX/worldY + camera.
    */
   readonly position: number;
   /**
-   * World-space X of the wipe plane. Authoritative when lock is 'world'.
+   * World-space X of the wipe plane (used when axis is vertical + world lock).
    */
   readonly worldX: number;
+  /**
+   * World-space Y of the wipe plane (used when axis is horizontal + world lock).
+   */
+  readonly worldY: number;
 };
 
 export const DEFAULT_WIPE_LOCK: WipeLock = 'world';
+export const DEFAULT_WIPE_AXIS: WipeAxis = 'vertical';
 export const DEFAULT_VIEW_MODE: ViewMode = 'wipe';
 
 export const VIEW_MODES: readonly ViewMode[] = ['full-a', 'wipe'] as const;

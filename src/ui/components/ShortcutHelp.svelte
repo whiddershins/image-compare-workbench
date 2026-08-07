@@ -74,12 +74,12 @@
         exclusive. <strong>B tap</strong> (hold toolbar button or <strong>V</strong>)
         always shows full B while held, then returns to Full A or Wipe.
       </p>
-      <h3>Wipe lock</h3>
+      <h3>Wipe axis &amp; lock</h3>
       <p class="note">
-        <strong>Wipe img</strong> (default): the divider tracks a fixed place on the
+        <strong>V / H</strong>: vertical (A left) or horizontal (A above) wipe.
+        <strong>Wipe img</strong> (default): divider tracks a fixed place on the
         images through pan and zoom.
-        <strong>Wipe scr</strong>: the divider stays fixed in the viewport (content
-        slides under it). Toggle on the toolbar.
+        <strong>Wipe scr</strong>: divider fixed in the viewport.
       </p>
     </div>
   </div>

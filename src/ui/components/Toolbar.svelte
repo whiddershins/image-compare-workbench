@@ -24,6 +24,8 @@
     B_TAP_DESCRIPTION,
     viewModeDescription,
     viewModeLabel,
+    wipeAxisDescription,
+    wipeAxisLabel,
     wipeLockDescription,
     wipeLockLabel,
   } from '../../domain/wipe';
@@ -52,6 +54,7 @@
   const canFolder = supportsDirectoryPicker() || supportsWebkitDirectory();
   const sizeNorm = $derived(workspace.sizeNormalization);
   const wipeLock = $derived(workspace.comparison.lock);
+  const wipeAxis = $derived(workspace.comparison.axis);
   const viewMode = $derived(workspace.comparison.viewMode);
   const refDisabled = $derived(sizeNorm.basis === 'native');
 
@@ -98,6 +101,11 @@
   function toggleWipeLock() {
     const next = wipeLock === 'world' ? 'viewport' : 'world';
     controller.setWipeLock(next, viewport);
+  }
+
+  function toggleWipeAxis() {
+    const next = wipeAxis === 'vertical' ? 'horizontal' : 'vertical';
+    controller.setWipeAxis(next, viewport);
   }
 
   async function onFilesSelected(e: Event) {
@@ -274,6 +282,16 @@
         {/each}
       </select>
     </label>
+    <button
+      type="button"
+      class="btn"
+      data-testid="wipe-axis-btn"
+      title={wipeAxisDescription(wipeAxis)}
+      aria-label={`Wipe axis: ${wipeAxis}`}
+      onclick={toggleWipeAxis}
+    >
+      {wipeAxisLabel(wipeAxis)}
+    </button>
     <button
       type="button"
       class="btn"

@@ -362,6 +362,7 @@ When you land deploy or QA, append a short **Changelog** subsection below rather
 - **2026-08-06** — **Wipe lock** default `world` (image-fixed through zoom/pan); toggle to `viewport` (screen-fixed). Follow-on noted for browser drag-selection UX (P4, undecided).
 - **2026-08-06** — Size norm split into orthogonal **basis × reference**. Cross-rail muted thumbs (opacity 50%) for image selected on the other side; click swaps A/B. Toolbar **⇄ Swap** kept.
 - **2026-08-07** — View: sticky **Full A | Wipe**; momentary **B tap** = hold full B (V / button), release restores.
+- **2026-08-07** — Wipe **V / H** axis (vertical A-left default; horizontal A-above). World lock uses worldX or worldY.
 - **2026-08-07** — Added an assets-only Cloudflare Worker POC with project-local Wrangler, SPA fallback,
   local preview, dry-run validation, and deploy scripts. Temporary deploy verified; permanent deploy
   remains pending auth.
