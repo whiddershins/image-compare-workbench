@@ -47,7 +47,7 @@ export type WipeLock = 'world' | 'viewport';
 
 /**
  * Sticky presentation of A/B (toolbar: Full A | Wipe).
- * Mutually exclusive. Peek (momentary full B) is NOT stored here — it is
+ * Mutually exclusive. B tap (momentary full B) is NOT stored here — it is
  * session UI state that overlays this mode while a key/button is held.
  * - full-a: only side A (full frame)
  * - wipe: A/B wipe composite (default)
@@ -57,7 +57,7 @@ export type ViewMode = 'full-a' | 'wipe';
 
 /**
  * What the viewport actually draws right now.
- * Includes momentary peek (full B) which never becomes sticky domain state.
+ * Includes momentary B tap (full B) which never becomes sticky domain state.
  */
 export type EffectiveView = ViewMode | 'full-b';
 

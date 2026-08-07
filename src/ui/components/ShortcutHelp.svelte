@@ -47,7 +47,7 @@
         <div><dt>↑ / ↓</dt><dd>Previous / next image on active side</dd></div>
         <div><dt>S</dt><dd>Swap A and B</dd></div>
         <div><dt>Full A / Wipe</dt><dd>Sticky view (mutually exclusive)</dd></div>
-        <div><dt>Hold V / Peek</dt><dd>Momentary full B; release restores</dd></div>
+        <div><dt>Hold V / B tap</dt><dd>Momentary full B; release restores</dd></div>
         <div><dt>F</dt><dd>Fit current pair</dd></div>
         <div><dt>0</dt><dd>100% zoom</dd></div>
         <div><dt>− / =</dt><dd>Zoom out / in</dd></div>
@@ -71,7 +71,7 @@
       <h3>View mode</h3>
       <p class="note">
         <strong>Full A</strong> and <strong>Wipe</strong> are sticky and mutually
-        exclusive. <strong>Peek</strong> (hold toolbar button or <strong>V</strong>)
+        exclusive. <strong>B tap</strong> (hold toolbar button or <strong>V</strong>)
         always shows full B while held, then returns to Full A or Wipe.
       </p>
       <h3>Wipe lock</h3>

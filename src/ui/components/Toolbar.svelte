@@ -21,7 +21,7 @@
     withSizeNormReference,
   } from '../../domain/sizeNormalization';
   import {
-    PEEK_DESCRIPTION,
+    B_TAP_DESCRIPTION,
     viewModeDescription,
     viewModeLabel,
     wipeLockDescription,
@@ -186,20 +186,20 @@
       type="button"
       class="btn"
       class:active-toggle={peekingB}
-      data-testid="peek-b-btn"
-      title={`${PEEK_DESCRIPTION} (hold V)`}
-      aria-label="Peek full B (hold)"
+      data-testid="b-tap-btn"
+      title={`${B_TAP_DESCRIPTION} (hold V)`}
+      aria-label="B tap — hold for full B"
       aria-pressed={peekingB}
       onpointerdown={onPeekDown}
       onpointerup={onPeekUp}
       onpointercancel={onPeekUp}
       onpointerleave={(e) => {
-        // End peek if pointer leaves while pressed without capture (fallback)
+        // End B tap if pointer leaves while pressed without capture (fallback)
         if (e.buttons === 0) controller.endPeekB();
       }}
       oncontextmenu={(e) => e.preventDefault()}
     >
-      Peek
+      B tap
     </button>
     <button
       type="button"

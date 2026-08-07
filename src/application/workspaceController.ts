@@ -77,7 +77,7 @@ export class WorkspaceController {
   private importTail: Promise<void> = Promise.resolve();
   private pendingImports = 0;
   private readonly importBatchProcessor: ImportBatchProcessor;
-  /** Momentary full-B overlay; not domain state. */
+  /** Momentary full-B overlay (B tap); not domain state. */
   private peekingB = false;
 
   private workspaceListeners = new Set<WorkspaceListener>();
@@ -142,7 +142,7 @@ export class WorkspaceController {
   }
 
   /**
-   * What the viewport should draw: sticky Full A / Wipe, or Full B while Peek is held.
+   * What the viewport should draw: sticky Full A / Wipe, or Full B while B tap is held.
    */
   getEffectiveView(): EffectiveView {
     if (this.peekingB) return 'full-b';
@@ -358,7 +358,7 @@ export class WorkspaceController {
   }
 
   setViewMode(mode: ViewMode): void {
-    // Sticky mode only — does not end peek; peek still overlays until release.
+    // Sticky mode only — does not end B tap; B tap still overlays until release.
     this.setWorkspace(setViewMode(this.workspace, mode));
   }
 

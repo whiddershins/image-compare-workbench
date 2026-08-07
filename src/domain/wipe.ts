@@ -59,7 +59,7 @@ export function viewModeDescription(mode: ViewMode): string {
   }
 }
 
-export const PEEK_DESCRIPTION =
+export const B_TAP_DESCRIPTION =
   'Hold to show full B. Release returns to Full A or Wipe (whichever was sticky).';
 
 /**

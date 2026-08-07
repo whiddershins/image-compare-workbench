@@ -112,9 +112,9 @@ If an image is selected as A, it appears **muted on the B rail** (and vice versa
 |---------|------|--------|
 | **Full A** | Sticky (vs Wipe) | Side A only |
 | **Wipe** | Sticky (vs Full A) | A/B wipe composite (default) |
-| **Peek** | Momentary hold | Full B while held; release restores Full A or Wipe |
+| **B tap** | Momentary hold | Full B while held; release restores Full A or Wipe |
 
-Hold **V** or the Peek button. Same shared camera; wipe geometry is unchanged by Peek.
+Hold **V** or the **B tap** button. Same shared camera; wipe geometry is unchanged by B tap.
 
 ## Wipe lock
 

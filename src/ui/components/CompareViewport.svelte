@@ -11,7 +11,7 @@
     workspace: Workspace;
     selectionLoadVersion: number;
     spaceHeld: boolean;
-    /** Momentary full B while Peek is held */
+    /** Momentary full B while B tap is held */
     peekingB: boolean;
   }
 
@@ -24,7 +24,7 @@
   let cursor = $derived(panning ? 'grabbing' : spaceHeld ? 'grab' : 'default');
 
   const camera = $derived(workspace.camera);
-  /** Sticky Full A / Wipe, overridden by Peek → full B */
+  /** Sticky Full A / Wipe, overridden by B tap → full B */
   const effectiveView = $derived(
     peekingB ? 'full-b' : workspace.comparison.viewMode,
   );
@@ -224,7 +224,7 @@
         >
       {:else if effectiveView === 'full-b'}
         <span class="label-b" data-testid="label-b"
-          >B · {assetB?.name ?? '—'}{peekingB ? ' · Peek' : ''}</span
+          >B · {assetB?.name ?? '—'}{peekingB ? ' · B tap' : ''}</span
         >
       {:else}
         <span class="label-a" data-testid="label-a"

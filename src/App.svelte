@@ -90,7 +90,7 @@
         return;
       }
 
-      // Hold V = momentary full B (peek)
+      // Hold V = momentary full B (B tap)
       if ((e.key === 'v' || e.key === 'V') && !e.repeat) {
         e.preventDefault();
         controller.beginPeekB();
