@@ -19,12 +19,14 @@
   let resourceVersion = $state(0);
   let helpOpen = $state(false);
   let spaceHeld = $state(false);
+  let peekingB = $state(false);
   let viewportSize = $state({ width: 800, height: 600 });
 
   const loaded = $derived(!isEmpty(workspace));
 
   onMount(() => {
     workspace = controller.getWorkspace();
+    peekingB = controller.isPeekingB();
     const unsubs = [
       controller.subscribe((w) => {
         const resourcesChanged = w.imageSet.assets !== workspace.imageSet.assets;
@@ -42,6 +44,9 @@
       }),
       controller.subscribeSelectionLoad(() => {
         selectionLoadVersion += 1;
+      }),
+      controller.subscribePeek((v) => {
+        peekingB = v;
       }),
     ];
 
@@ -82,6 +87,13 @@
           e.preventDefault();
           helpOpen = true;
         }
+        return;
+      }
+
+      // Hold V = momentary full B (peek)
+      if ((e.key === 'v' || e.key === 'V') && !e.repeat) {
+        e.preventDefault();
+        controller.beginPeekB();
         return;
       }
 
@@ -139,6 +151,12 @@
 
     function onKeyUp(e: KeyboardEvent) {
       if (e.key === ' ') spaceHeld = false;
+      if (e.key === 'v' || e.key === 'V') controller.endPeekB();
+    }
+
+    function onBlur() {
+      controller.endPeekB();
+      spaceHeld = false;
     }
 
     // Prevent browser navigating on file drop at window level
@@ -148,6 +166,7 @@
 
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('blur', onBlur);
     window.addEventListener('dragover', preventNav);
     window.addEventListener('drop', preventNav);
 
@@ -155,6 +174,7 @@
       for (const u of unsubs) u();
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('blur', onBlur);
       window.removeEventListener('dragover', preventNav);
       window.removeEventListener('drop', preventNav);
       controller.destroy();
@@ -173,6 +193,7 @@
         <Toolbar
           {workspace}
           viewport={viewportSize}
+          {peekingB}
           onhelp={() => (helpOpen = true)}
         />
         <div
@@ -185,6 +206,7 @@
             {workspace}
             {selectionLoadVersion}
             {spaceHeld}
+            {peekingB}
           />
         </div>
       </div>

@@ -46,7 +46,8 @@
         <div><dt>A / B</dt><dd>Activate side A or B</dd></div>
         <div><dt>↑ / ↓</dt><dd>Previous / next image on active side</dd></div>
         <div><dt>S</dt><dd>Swap A and B</dd></div>
-        <div><dt>Full A / Wipe / Full B</dt><dd>Toolbar view mode</dd></div>
+        <div><dt>Full A / Wipe</dt><dd>Sticky view (mutually exclusive)</dd></div>
+        <div><dt>Hold V / Peek</dt><dd>Momentary full B; release restores</dd></div>
         <div><dt>F</dt><dd>Fit current pair</dd></div>
         <div><dt>0</dt><dd>100% zoom</dd></div>
         <div><dt>− / =</dt><dd>Zoom out / in</dd></div>
@@ -69,9 +70,9 @@
       </p>
       <h3>View mode</h3>
       <p class="note">
-        Segmented control <strong>Full A | Wipe | Full B</strong>: full A only, wipe
-        composite (default), or full B only. Same camera throughout. Switching modes
-        does not move the wipe; return to Wipe to pick up the same divider.
+        <strong>Full A</strong> and <strong>Wipe</strong> are sticky and mutually
+        exclusive. <strong>Peek</strong> (hold toolbar button or <strong>V</strong>)
+        always shows full B while held, then returns to Full A or Wipe.
       </p>
       <h3>Wipe lock</h3>
       <p class="note">

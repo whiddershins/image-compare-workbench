@@ -35,7 +35,7 @@ describe('wipe lock', () => {
     expect(c.worldX).toBe(0);
   });
 
-  it('setViewMode does not alter wipe position or camera', () => {
+  it('setViewMode only toggles sticky Full A / Wipe; keeps wipe geometry', () => {
     let w = workspaceWithCamera();
     w = setWipeFromViewportPosition(w, 0.3, viewport);
     const cam = w.camera;
@@ -46,9 +46,6 @@ describe('wipe lock', () => {
     expect(w.comparison.position).toBe(pos);
     expect(w.comparison.worldX).toBe(worldX);
     expect(w.camera).toBe(cam);
-    w = setViewMode(w, 'full-b');
-    expect(w.comparison.viewMode).toBe('full-b');
-    expect(w.comparison.position).toBe(pos);
     w = setViewMode(w, 'wipe');
     expect(w.comparison.viewMode).toBe('wipe');
     expect(w.comparison.position).toBe(pos);

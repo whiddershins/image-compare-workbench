@@ -11,9 +11,12 @@
     workspace: Workspace;
     selectionLoadVersion: number;
     spaceHeld: boolean;
+    /** Momentary full B while Peek is held */
+    peekingB: boolean;
   }
 
-  let { workspace, selectionLoadVersion, spaceHeld }: Props = $props();
+  let { workspace, selectionLoadVersion, spaceHeld, peekingB }: Props =
+    $props();
 
   let hostEl: HTMLDivElement | undefined = $state();
   let viewport = $state({ width: 0, height: 0 });
@@ -21,8 +24,10 @@
   let cursor = $derived(panning ? 'grabbing' : spaceHeld ? 'grab' : 'default');
 
   const camera = $derived(workspace.camera);
-  const viewMode = $derived(workspace.comparison.viewMode);
-  const showWipeUi = $derived(viewMode === 'wipe');
+  /** Sticky Full A / Wipe, overridden by Peek → full B */
+  const effectiveView = $derived(
+    peekingB ? 'full-b' : workspace.comparison.viewMode,
+  );
   /** On-screen wipe fraction (world-lock derives from camera each frame). */
   const wipe = $derived(
     displayWipePosition(workspace.comparison, workspace.camera, viewport),
@@ -153,7 +158,7 @@
   aria-label="Comparison viewport"
 >
   {#if camera && viewport.width > 0}
-    {#if viewMode === 'full-a'}
+    {#if effectiveView === 'full-a'}
       <ComparisonScene
         asset={assetA}
         imageUrl={sideA.url}
@@ -164,7 +169,7 @@
         error={sideA.error}
         label="A"
       />
-    {:else if viewMode === 'full-b'}
+    {:else if effectiveView === 'full-b'}
       <ComparisonScene
         asset={assetB}
         imageUrl={sideB.url}
@@ -213,13 +218,13 @@
     {/if}
 
     <div class="labels" aria-hidden="true">
-      {#if viewMode === 'full-a'}
+      {#if effectiveView === 'full-a'}
         <span class="label-a" data-testid="label-a"
           >A · {assetA?.name ?? '—'}</span
         >
-      {:else if viewMode === 'full-b'}
+      {:else if effectiveView === 'full-b'}
         <span class="label-b" data-testid="label-b"
-          >B · {assetB?.name ?? '—'}</span
+          >B · {assetB?.name ?? '—'}{peekingB ? ' · Peek' : ''}</span
         >
       {:else}
         <span class="label-a" data-testid="label-a"

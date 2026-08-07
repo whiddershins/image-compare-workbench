@@ -4,6 +4,7 @@ import type {
   Side,
   SizeNormalization,
   ViewportSize,
+  EffectiveView,
   ViewMode,
   WipeLock,
   Workspace,
@@ -57,6 +58,7 @@ export type SummaryListener = (summary: ImportSummary | null) => void;
 export type ErrorListener = (error: AppError | null) => void;
 export type LoadingListener = (loading: boolean) => void;
 export type SelectionLoadListener = () => void;
+export type PeekListener = (peeking: boolean) => void;
 export type ImportBatchProcessor = typeof processImportBatch;
 
 /**
@@ -75,12 +77,15 @@ export class WorkspaceController {
   private importTail: Promise<void> = Promise.resolve();
   private pendingImports = 0;
   private readonly importBatchProcessor: ImportBatchProcessor;
+  /** Momentary full-B overlay; not domain state. */
+  private peekingB = false;
 
   private workspaceListeners = new Set<WorkspaceListener>();
   private summaryListeners = new Set<SummaryListener>();
   private errorListeners = new Set<ErrorListener>();
   private loadingListeners = new Set<LoadingListener>();
   private selectionLoadListeners = new Set<SelectionLoadListener>();
+  private peekListeners = new Set<PeekListener>();
 
   constructor(importBatchProcessor: ImportBatchProcessor = processImportBatch) {
     this.importBatchProcessor = importBatchProcessor;
@@ -127,8 +132,41 @@ export class WorkspaceController {
     return () => this.selectionLoadListeners.delete(listener);
   }
 
+  subscribePeek(listener: PeekListener): () => void {
+    this.peekListeners.add(listener);
+    return () => this.peekListeners.delete(listener);
+  }
+
+  isPeekingB(): boolean {
+    return this.peekingB;
+  }
+
+  /**
+   * What the viewport should draw: sticky Full A / Wipe, or Full B while Peek is held.
+   */
+  getEffectiveView(): EffectiveView {
+    if (this.peekingB) return 'full-b';
+    return this.workspace.comparison.viewMode;
+  }
+
+  beginPeekB(): void {
+    if (this.peekingB) return;
+    this.peekingB = true;
+    this.emitPeek();
+  }
+
+  endPeekB(): void {
+    if (!this.peekingB) return;
+    this.peekingB = false;
+    this.emitPeek();
+  }
+
   private emitWorkspace(): void {
     for (const l of this.workspaceListeners) l(this.workspace);
+  }
+
+  private emitPeek(): void {
+    for (const l of this.peekListeners) l(this.peekingB);
   }
 
   private emitSummary(): void {
@@ -320,6 +358,7 @@ export class WorkspaceController {
   }
 
   setViewMode(mode: ViewMode): void {
+    // Sticky mode only — does not end peek; peek still overlays until release.
     this.setWorkspace(setViewMode(this.workspace, mode));
   }
 
@@ -416,11 +455,13 @@ export class WorkspaceController {
     this.generation += 1;
     this.pendingImports = 0;
     this.importing = false;
+    this.peekingB = false;
     this.registry.clear();
     this.workspaceListeners.clear();
     this.summaryListeners.clear();
     this.errorListeners.clear();
     this.loadingListeners.clear();
     this.selectionLoadListeners.clear();
+    this.peekListeners.clear();
   }
 }

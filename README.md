@@ -108,15 +108,13 @@ If an image is selected as A, it appears **muted on the B rail** (and vice versa
 
 ## View mode
 
-Toolbar segment **Full A | Wipe | Full B** (mutually exclusive):
+| Control | Type | Shows |
+|---------|------|--------|
+| **Full A** | Sticky (vs Wipe) | Side A only |
+| **Wipe** | Sticky (vs Full A) | A/B wipe composite (default) |
+| **Peek** | Momentary hold | Full B while held; release restores Full A or Wipe |
 
-| Mode | Shows |
-|------|--------|
-| **Full A** | Side A only |
-| **Wipe** | A/B wipe composite (default) |
-| **Full B** | Side B only |
-
-Same shared camera. Wipe position is preserved while you visit A or B so returning to Wipe is seamless.
+Hold **V** or the Peek button. Same shared camera; wipe geometry is unchanged by Peek.
 
 ## Wipe lock
 

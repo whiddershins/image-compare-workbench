@@ -47,21 +47,20 @@ export function viewModeLabel(mode: ViewMode): string {
       return 'Full A';
     case 'wipe':
       return 'Wipe';
-    case 'full-b':
-      return 'Full B';
   }
 }
 
 export function viewModeDescription(mode: ViewMode): string {
   switch (mode) {
     case 'full-a':
-      return 'Full A only (same camera). Wipe position is kept for when you return to Wipe.';
+      return 'Full A only (same camera). Mutually exclusive with Wipe.';
     case 'wipe':
-      return 'A/B wipe composite (default compare view).';
-    case 'full-b':
-      return 'Full B only (same camera). Wipe position is kept for when you return to Wipe.';
+      return 'A/B wipe composite (default). Mutually exclusive with Full A.';
   }
 }
+
+export const PEEK_DESCRIPTION =
+  'Hold to show full B. Release returns to Full A or Wipe (whichever was sticky).';
 
 /**
  * Viewport-normalized wipe position used for clip-path and the divider.

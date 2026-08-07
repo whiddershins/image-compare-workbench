@@ -21,6 +21,7 @@
     withSizeNormReference,
   } from '../../domain/sizeNormalization';
   import {
+    PEEK_DESCRIPTION,
     viewModeDescription,
     viewModeLabel,
     wipeLockDescription,
@@ -37,10 +38,11 @@
   interface Props {
     workspace: Workspace;
     viewport: ViewportSize;
+    peekingB: boolean;
     onhelp: () => void;
   }
 
-  let { workspace, viewport, onhelp }: Props = $props();
+  let { workspace, viewport, peekingB, onhelp }: Props = $props();
 
   let fileInput: HTMLInputElement | undefined = $state();
   let folderInput: HTMLInputElement | undefined = $state();
@@ -59,6 +61,21 @@
 
   function setView(mode: ViewMode) {
     controller.setViewMode(mode);
+  }
+
+  function onPeekDown(e: PointerEvent) {
+    e.preventDefault();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    controller.beginPeekB();
+  }
+
+  function onPeekUp(e: PointerEvent) {
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {
+      /* already released */
+    }
+    controller.endPeekB();
   }
 
   function onBasisChange(e: Event) {
@@ -154,9 +171,9 @@
         <button
           type="button"
           class="btn seg-btn"
-          class:active={viewMode === mode}
+          class:active={viewMode === mode && !peekingB}
           role="radio"
-          aria-checked={viewMode === mode}
+          aria-checked={viewMode === mode && !peekingB}
           data-testid={`view-mode-${mode}`}
           title={viewModeDescription(mode)}
           onclick={() => setView(mode)}
@@ -165,6 +182,25 @@
         </button>
       {/each}
     </div>
+    <button
+      type="button"
+      class="btn"
+      class:active-toggle={peekingB}
+      data-testid="peek-b-btn"
+      title={`${PEEK_DESCRIPTION} (hold V)`}
+      aria-label="Peek full B (hold)"
+      aria-pressed={peekingB}
+      onpointerdown={onPeekDown}
+      onpointerup={onPeekUp}
+      onpointercancel={onPeekUp}
+      onpointerleave={(e) => {
+        // End peek if pointer leaves while pressed without capture (fallback)
+        if (e.buttons === 0) controller.endPeekB();
+      }}
+      oncontextmenu={(e) => e.preventDefault()}
+    >
+      Peek
+    </button>
     <button
       type="button"
       class="btn"
