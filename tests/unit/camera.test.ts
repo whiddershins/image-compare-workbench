@@ -93,7 +93,7 @@ describe('camera geometry', () => {
       axisDelta: 20,
     },
   ] as const)(
-    'hybrid $axis pan keeps the divider screen-fixed and reanchors $worldKey',
+    'hybrid $axis drag pan keeps the divider screen-fixed and reanchors $worldKey',
     ({ axis, dx, dy, worldKey, inactiveKey, axisDelta }) => {
       const workspace = workspaceWithWipe('hybrid', axis, 0.65);
       const displayBefore = displayWipePosition(
@@ -104,7 +104,7 @@ describe('camera geometry', () => {
       const worldBefore = workspace.comparison[worldKey];
       const inactiveBefore = workspace.comparison[inactiveKey];
 
-      const next = panWorkspace(workspace, viewport, dx, dy);
+      const next = panWorkspace(workspace, viewport, dx, dy, 'drag');
 
       expect(
         displayWipePosition(next.comparison, next.camera, viewport),
@@ -113,6 +113,39 @@ describe('camera geometry', () => {
         worldBefore - axisDelta / workspace.camera!.scale,
       );
       expect(next.comparison[inactiveKey]).toBe(inactiveBefore);
+    },
+  );
+
+  it.each([
+    {
+      axis: 'vertical' as const,
+      dx: 20,
+      dy: 0,
+      worldKey: 'worldX' as const,
+    },
+    {
+      axis: 'horizontal' as const,
+      dx: 0,
+      dy: 20,
+      worldKey: 'worldY' as const,
+    },
+  ])(
+    'hybrid $axis wheel pan moves world with camera (no wipe reanchor)',
+    ({ axis, dx, dy, worldKey }) => {
+      const workspace = workspaceWithWipe('hybrid', axis, 0.65);
+      const displayBefore = displayWipePosition(
+        workspace.comparison,
+        workspace.camera,
+        viewport,
+      );
+      const worldBefore = workspace.comparison[worldKey];
+
+      const next = panWorkspace(workspace, viewport, dx, dy, 'wheel');
+
+      expect(next.comparison[worldKey]).toBe(worldBefore);
+      expect(
+        displayWipePosition(next.comparison, next.camera, viewport),
+      ).not.toBeCloseTo(displayBefore);
     },
   );
 

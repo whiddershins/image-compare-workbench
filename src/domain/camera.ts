@@ -100,11 +100,20 @@ export function zoomWorkspaceCenter(
   };
 }
 
+/**
+ * How pan interacts with hybrid wipe behavior.
+ * - drag: pointer click-hold / Space+drag — images slide under a fixed divider
+ * - wheel: two-finger trackpad / mouse wheel pan — camera + wipe move as one world
+ * Other wipe behaviors ignore this (world/viewport rules apply uniformly).
+ */
+export type PanSource = 'drag' | 'wheel';
+
 export function panWorkspace(
   workspace: Workspace,
   viewport: ViewportSize,
   dx: number,
   dy: number,
+  source: PanSource = 'drag',
 ): Workspace {
   if (!workspace.camera) return workspace;
   const wipeBeforePan = displayWipePosition(
@@ -117,11 +126,13 @@ export function panWorkspace(
     camera: panByScreenDelta(workspace.camera, dx, dy),
   };
 
-  if (workspace.comparison.behavior !== 'hybrid') return next;
+  // Hybrid drag only: screen-fixed wipe (re-anchor world under fixed divider).
+  // Hybrid wheel: world-locked — wipe rides with the image (no re-anchor).
+  // Zoom never calls this path, so pointer-centered zoom stays image-attached.
+  if (workspace.comparison.behavior !== 'hybrid' || source !== 'drag') {
+    return next;
+  }
 
-  // Hybrid is screen-locked for deliberate pan only. Re-anchor the wipe to
-  // the world coordinate newly underneath the unchanged screen position.
-  // Zoom never calls this path, so native pointer-centered zoom is untouched.
   return setWipeFromViewportPosition(next, wipeBeforePan, viewport);
 }
 

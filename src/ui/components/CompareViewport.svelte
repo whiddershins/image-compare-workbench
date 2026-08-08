@@ -115,7 +115,8 @@
       const dy = ev.clientY - lastY;
       lastX = ev.clientX;
       lastY = ev.clientY;
-      controller.pan(viewport, dx, dy);
+      // Hybrid: drag slides images under a fixed wipe divider.
+      controller.pan(viewport, dx, dy, 'drag');
     }
     function onUp(ev: PointerEvent) {
       panning = false;
@@ -144,7 +145,8 @@
       return;
     }
 
-    controller.pan(viewport, -e.deltaX, -e.deltaY);
+    // Hybrid: two-finger / wheel pan moves camera + wipe as one world.
+    controller.pan(viewport, -e.deltaX, -e.deltaY, 'wheel');
   }
 </script>
 

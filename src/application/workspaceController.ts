@@ -34,6 +34,7 @@ import {
   setCamera100Percent,
   zoomWorkspaceAtPoint,
   zoomWorkspaceCenter,
+  type PanSource,
 } from '../domain/camera';
 import type { Point } from '../domain/model';
 import { summarizeImportIssues } from '../domain/importPolicy';
@@ -439,8 +440,13 @@ export class WorkspaceController {
     );
   }
 
-  pan(viewport: ViewportSize, dx: number, dy: number): void {
-    this.setWorkspace(panWorkspace(this.workspace, viewport, dx, dy));
+  pan(
+    viewport: ViewportSize,
+    dx: number,
+    dy: number,
+    source: PanSource = 'drag',
+  ): void {
+    this.setWorkspace(panWorkspace(this.workspace, viewport, dx, dy, source));
   }
 
   private beginSideLoad(side: Side, assetId: AssetId): void {

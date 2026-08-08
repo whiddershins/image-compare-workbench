@@ -51,7 +51,8 @@
         <div><dt>F</dt><dd>Fit current pair</dd></div>
         <div><dt>0</dt><dd>100% zoom</dd></div>
         <div><dt>− / =</dt><dd>Zoom out / in</dd></div>
-        <div><dt>Space + drag</dt><dd>Pan</dd></div>
+        <div><dt>Drag / Space+drag</dt><dd>Pan under wipe (hybrid)</dd></div>
+        <div><dt>Two-finger / wheel</dt><dd>Pan world (hybrid rides wipe)</dd></div>
         <div><dt>?</dt><dd>This help</dd></div>
         <div><dt>Wipe ← →</dt><dd>Adjust wipe when focused</dd></div>
       </dl>
@@ -77,8 +78,9 @@
       <h3>Wipe axis &amp; behavior</h3>
       <p class="note">
         <strong>V / H</strong>: vertical (A left) or horizontal (A above) wipe.
-        <strong>Hybrid</strong> (default): pan moves the images beneath a fixed
-        divider; zoom keeps the divider attached to the same image position.
+        <strong>Hybrid</strong> (default): click-drag pans images under a fixed
+        divider; two-finger/wheel pan moves the whole world (divider rides with
+        the image); zoom keeps the divider on the same image position.
         <strong>Image locked</strong>: attached through pan and zoom.
         <strong>Screen locked</strong>: fixed in the viewport through pan and zoom.
       </p>

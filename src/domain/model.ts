@@ -40,7 +40,10 @@ export interface CameraState {
 
 /**
  * How the wipe plane responds to camera navigation.
- * - hybrid: screen-fixed while panning, image-fixed while zooming (default)
+ * - hybrid (default):
+ *   - pointer drag / Space+drag: screen-fixed wipe (images slide under divider)
+ *   - two-finger / wheel pan: world-locked (camera + wipe move together)
+ *   - zoom: image-fixed (divider stays on the same image position)
  * - world: fixed world/image coordinate through both pan and zoom
  * - viewport: fixed screen fraction through both pan and zoom
  */

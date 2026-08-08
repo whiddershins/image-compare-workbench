@@ -316,7 +316,7 @@ export function wipeBehaviorLabel(behavior: WipeBehavior): string {
 export function wipeBehaviorDescription(behavior: WipeBehavior): string {
   switch (behavior) {
     case 'hybrid':
-      return 'Pan moves the images beneath a screen-fixed wipe; zoom keeps the wipe attached to the same image position.';
+      return 'Drag pans images under a fixed wipe; two-finger/wheel pan moves camera and wipe together; zoom keeps the wipe on the same image position.';
     case 'world':
       return 'Wipe stays attached to the same image position through pan and zoom.';
     case 'viewport':
