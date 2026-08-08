@@ -58,6 +58,8 @@
   // Sticky radiogroup selection is presentation only; side-tap uses aria-pressed.
   const fullActive = $derived(presentation === 'full');
   const wipeActive = $derived(presentation === 'wipe');
+  /** Axis + wipe-lock only apply in wipe presentation. */
+  const wipeChromeDisabled = $derived(presentation !== 'wipe');
 
   function fit() {
     controller.fit(viewport);
@@ -302,8 +304,11 @@
       type="button"
       class="btn"
       data-testid="wipe-axis-btn"
-      title={wipeAxisDescription(wipeAxis)}
+      title={wipeChromeDisabled
+        ? 'Wipe axis applies in Wipe mode only'
+        : wipeAxisDescription(wipeAxis)}
       aria-label={`Wipe axis: ${wipeAxis}`}
+      disabled={wipeChromeDisabled}
       onclick={toggleWipeAxis}
     >
       {wipeAxisLabel(wipeAxis)}
@@ -311,11 +316,14 @@
     <button
       type="button"
       class="btn"
-      class:active-toggle={wipeLock === 'world'}
+      class:active-toggle={wipeLock === 'world' && !wipeChromeDisabled}
       data-testid="wipe-lock-btn"
-      title={wipeLockDescription(wipeLock)}
+      title={wipeChromeDisabled
+        ? 'Wipe lock applies in Wipe mode only'
+        : wipeLockDescription(wipeLock)}
       aria-pressed={wipeLock === 'world'}
       aria-label={wipeLockLabel(wipeLock)}
+      disabled={wipeChromeDisabled}
       onclick={toggleWipeLock}
     >
       {wipeLock === 'world' ? 'Wipe img' : 'Wipe scr'}
