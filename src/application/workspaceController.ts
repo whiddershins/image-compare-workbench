@@ -312,6 +312,7 @@ export class WorkspaceController {
     this.generation += 1;
     this.pendingImports = 0;
     this.setImporting(false);
+    this.endSideTap(); // full interaction reset
     this.selectionLoader.reset();
     this.setWorkspace(clearDomain());
     this.registry.clear();

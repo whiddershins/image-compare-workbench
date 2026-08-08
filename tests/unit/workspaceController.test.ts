@@ -103,6 +103,15 @@ describe('WorkspaceController import queue', () => {
     controller.destroy();
   });
 
+  it('clear ends active side-tap', () => {
+    const controller = new WorkspaceController();
+    controller.beginSideTap();
+    expect(controller.isSideTapping()).toBe(true);
+    controller.clear();
+    expect(controller.isSideTapping()).toBe(false);
+    controller.destroy();
+  });
+
   it('clear cancels active and queued imports without leaving loading stale', async () => {
     let release!: () => void;
     const gate = new Promise<void>((resolve) => {

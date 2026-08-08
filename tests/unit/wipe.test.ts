@@ -111,6 +111,47 @@ describe('view state machine (presentation ⟂ focus)', () => {
       'a',
     );
   });
+
+  it('presentation transitions preserve non-default camera and wipe geometry', () => {
+    let w = workspaceWithCamera();
+    w = {
+      ...w,
+      camera: { centerX: 42, centerY: -17, scale: 2.5 },
+      comparison: {
+        ...w.comparison,
+        lock: 'world',
+        position: 0.33,
+        worldX: 12,
+        worldY: -4,
+        axis: 'horizontal',
+      },
+    };
+    const cameraBefore = w.camera;
+    const wipeGeom = {
+      lock: w.comparison.lock,
+      position: w.comparison.position,
+      worldX: w.comparison.worldX,
+      worldY: w.comparison.worldY,
+      axis: w.comparison.axis,
+    };
+
+    w = applyCycleFull(w); // wipe → full A
+    expect(w.camera).toEqual(cameraBefore);
+    expect(w.comparison).toMatchObject(wipeGeom);
+    expect(w.comparison.presentation).toBe('full');
+    expect(w.comparison.focus).toBe('a');
+
+    w = applyCycleFull(w); // full A → full B
+    expect(w.camera).toEqual(cameraBefore);
+    expect(w.comparison).toMatchObject(wipeGeom);
+    expect(w.comparison.focus).toBe('b');
+
+    w = applyWipePresentation(w); // full B → wipe, focus stays b
+    expect(w.camera).toEqual(cameraBefore);
+    expect(w.comparison).toMatchObject(wipeGeom);
+    expect(w.comparison.presentation).toBe('wipe');
+    expect(w.comparison.focus).toBe('b');
+  });
 });
 
 describe('wipe lock', () => {

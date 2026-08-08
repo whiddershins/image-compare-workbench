@@ -200,6 +200,99 @@ test.describe('core comparison invariant', () => {
     }
   });
 
+  test('view mode flow keeps A/B image nodes mounted', async ({ page }) => {
+    await page.goto('/');
+    await importImages(page, fixtureFiles(3));
+
+    const viewport = page.getByTestId('compare-viewport');
+    await expect(viewport).toHaveAttribute('data-view', 'wipe');
+
+    // Capture live DOM node identities for A and B scene images
+    const nodeIdsBefore = await page.evaluate(() => {
+      const a = document.querySelector('img[data-side="a"]');
+      const b = document.querySelector('img[data-side="b"]');
+      if (!(a instanceof HTMLImageElement) || !(b instanceof HTMLImageElement)) {
+        return null;
+      }
+      // Stamp a stable marker on the element instances
+      (a as HTMLImageElement & { __nodeId?: string }).__nodeId = 'node-a';
+      (b as HTMLImageElement & { __nodeId?: string }).__nodeId = 'node-b';
+      return {
+        a: (a as HTMLImageElement & { __nodeId?: string }).__nodeId,
+        b: (b as HTMLImageElement & { __nodeId?: string }).__nodeId,
+        aSrc: a.currentSrc || a.src,
+        bSrc: b.currentSrc || b.src,
+      };
+    });
+    expect(nodeIdsBefore).not.toBeNull();
+
+    const fullBtn = page.getByTestId('view-mode-full');
+    const wipeBtn = page.getByTestId('view-mode-wipe');
+    const tapBtn = page.getByTestId('side-tap-btn');
+
+    // Wipe → Full A
+    await fullBtn.click();
+    await expect(viewport).toHaveAttribute('data-view', 'a');
+    await expect(fullBtn).toHaveAttribute('aria-checked', 'true');
+    await expect(wipeBtn).toHaveAttribute('aria-checked', 'false');
+    await expect(tapBtn).toHaveText('B tap');
+
+    // Full A → Full B (re-press)
+    await fullBtn.click();
+    await expect(viewport).toHaveAttribute('data-view', 'b');
+    await expect(fullBtn).toHaveText('Full B');
+    await expect(tapBtn).toHaveText('A tap');
+    // Radios still reflect sticky full while... (not tapping yet)
+    await expect(fullBtn).toHaveAttribute('aria-checked', 'true');
+
+    // Full B → Wipe (focus stays B, so A tap remains)
+    await wipeBtn.click();
+    await expect(viewport).toHaveAttribute('data-view', 'wipe');
+    await expect(wipeBtn).toHaveAttribute('aria-checked', 'true');
+    await expect(fullBtn).toHaveAttribute('aria-checked', 'false');
+    await expect(fullBtn).toHaveText('Full B');
+    await expect(tapBtn).toHaveText('A tap');
+
+    // Side-hold: real mouse press on A/B tap (keyboard V is ignored while a button is focused)
+    const tapBox = await tapBtn.boundingBox();
+    expect(tapBox).toBeTruthy();
+    await page.mouse.move(
+      tapBox!.x + tapBox!.width / 2,
+      tapBox!.y + tapBox!.height / 2,
+    );
+    await page.mouse.down();
+    await expect(viewport).toHaveAttribute('data-view', 'a');
+    await expect(tapBtn).toHaveAttribute('aria-pressed', 'true');
+    // Sticky radios still reflect presentation, not the transient hold
+    await expect(wipeBtn).toHaveAttribute('aria-checked', 'true');
+    await expect(fullBtn).toHaveAttribute('aria-checked', 'false');
+
+    await page.mouse.up();
+    await expect(viewport).toHaveAttribute('data-view', 'wipe');
+    await expect(tapBtn).toHaveAttribute('aria-pressed', 'false');
+    await expect(tapBtn).toHaveText('A tap');
+
+    // Same <img> element instances still present (no remount)
+    const nodeIdsAfter = await page.evaluate(() => {
+      const a = document.querySelector('img[data-side="a"]') as
+        | (HTMLImageElement & { __nodeId?: string })
+        | null;
+      const b = document.querySelector('img[data-side="b"]') as
+        | (HTMLImageElement & { __nodeId?: string })
+        | null;
+      return {
+        a: a?.__nodeId ?? null,
+        b: b?.__nodeId ?? null,
+        aSrc: a ? a.currentSrc || a.src : null,
+        bSrc: b ? b.currentSrc || b.src : null,
+      };
+    });
+    expect(nodeIdsAfter.a).toBe('node-a');
+    expect(nodeIdsAfter.b).toBe('node-b');
+    expect(nodeIdsAfter.aSrc).toBe(nodeIdsBefore!.aSrc);
+    expect(nodeIdsAfter.bSrc).toBe(nodeIdsBefore!.bSrc);
+  });
+
   test('empty-state imports report unsupported files', async ({ page }) => {
     await page.goto('/');
     await page.locator('input[type="file"]').first().setInputFiles({

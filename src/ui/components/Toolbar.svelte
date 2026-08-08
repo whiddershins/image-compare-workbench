@@ -55,8 +55,9 @@
   const presentation = $derived(workspace.comparison.presentation);
   const focus = $derived(workspace.comparison.focus);
   const refDisabled = $derived(sizeNorm.basis === 'native');
-  const fullActive = $derived(presentation === 'full' && !sideTapping);
-  const wipeActive = $derived(presentation === 'wipe' && !sideTapping);
+  // Sticky radiogroup selection is presentation only; side-tap uses aria-pressed.
+  const fullActive = $derived(presentation === 'full');
+  const wipeActive = $derived(presentation === 'wipe');
 
   function fit() {
     controller.fit(viewport);
