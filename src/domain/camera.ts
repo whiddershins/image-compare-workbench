@@ -20,6 +20,10 @@ import {
   placedBounds,
 } from './sizeNormalization';
 import { getAsset } from './workspaceTransitions';
+import {
+  displayWipePosition,
+  setWipeFromViewportPosition,
+} from './wipe';
 
 /**
  * Union of selected A/B world bounds after size normalization.
@@ -98,14 +102,27 @@ export function zoomWorkspaceCenter(
 
 export function panWorkspace(
   workspace: Workspace,
+  viewport: ViewportSize,
   dx: number,
   dy: number,
 ): Workspace {
   if (!workspace.camera) return workspace;
-  return {
+  const wipeBeforePan = displayWipePosition(
+    workspace.comparison,
+    workspace.camera,
+    viewport,
+  );
+  const next = {
     ...workspace,
     camera: panByScreenDelta(workspace.camera, dx, dy),
   };
+
+  if (workspace.comparison.behavior !== 'hybrid') return next;
+
+  // Hybrid is screen-locked for deliberate pan only. Re-anchor the wipe to
+  // the world coordinate newly underneath the unchanged screen position.
+  // Zoom never calls this path, so native pointer-centered zoom is untouched.
+  return setWipeFromViewportPosition(next, wipeBeforePan, viewport);
 }
 
 export function withCamera(

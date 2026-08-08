@@ -28,8 +28,8 @@ Full original v0 specification lived in the implementing agent’s prompt (Image
 | Domain layer (pure TS) | **Done** | See `src/domain/` |
 | Browser shell (import, decode, thumbs, registry) | **Done** | See `src/infrastructure/`, `src/application/` |
 | UI (empty drop, rails, viewport, wipe, toolbar) | **Done** | See `src/ui/`, `src/App.svelte` |
-| Unit tests (Vitest) | **Done** | 54 tests, green on 2026-08-07 |
-| E2E (Playwright / Chromium) | **Done** | 7 tests, green on 2026-08-07 |
+| Unit tests (Vitest) | **Done** | 75 tests, green on 2026-08-07 |
+| E2E (Playwright / Chromium) | **Done** | 9 tests, green on 2026-08-07 |
 | CI (GitHub Actions) | **Done** | `.github/workflows/ci.yml` |
 | README | **Done** | User-facing |
 | GitHub private remote + push | **Done** | `origin` → whiddershins/image-compare-workbench |
@@ -43,8 +43,8 @@ Full original v0 specification lived in the implementing agent’s prompt (Image
 
 ```bash
 npm run check    # svelte-check + tsc
-npm run test     # vitest (54)
-npm run test:e2e # playwright chromium (7)
+npm run test     # vitest (75)
+npm run test:e2e # playwright chromium (9)
 npm run build    # dist/
 ```
 
@@ -204,12 +204,15 @@ Worth adding if tightening v0:
 
 **Do not “fix” casually without choosing a model.** Note for a future pass; not blocking deploy.
 
-### P5 — Wipe lock (implemented 2026-08-06)
+### P5 — Wipe navigation behavior (implemented 2026-08-06, refined 2026-08-07)
 
-- **Default:** `world` — wipe tracks fixed world X through pan/zoom (same place on images).
-- **Toggle:** `viewport` — wipe fixed in screen space (original v0).
-- Toolbar button: **Wipe img** / **Wipe scr**.
-- Domain: `src/domain/wipe.ts`; `ComparisonState.lock` + `worldX`.
+- **Default:** `hybrid` — explicit pan keeps the wipe screen-fixed by re-anchoring
+  its world coordinate; zoom keeps that world coordinate fixed and leaves native
+  pointer-centered trackpad zoom untouched.
+- **Image locked:** `world` — wipe tracks a fixed world X/Y through pan and zoom.
+- **Screen locked:** `viewport` — wipe stays at a fixed screen fraction through pan and zoom.
+- Toolbar dropdown: **Hybrid** / **Image locked** / **Screen locked**.
+- Domain: `src/domain/wipe.ts`; camera-aware pan transition in `src/domain/camera.ts`.
 
 ### Out of scope for v0 (do not implement casually)
 
@@ -363,6 +366,9 @@ When you land deploy or QA, append a short **Changelog** subsection below rather
 - **2026-08-07** — View state: `presentation ⟂ focus`. Wipe never mutates focus/side-tap. Full re-press flips focus; hold tap = opposite of focus.
 - **2026-08-07** — Wipe **V / H** axis (vertical A-left default; horizontal A-above). World lock uses worldX or worldY.
 - **2026-08-07** — Side-tap/view switch keeps A/B scenes mounted (no img remount blink).
+- **2026-08-07** — Wipe navigation gained a default **Hybrid** mode: screen-fixed
+  during explicit pan and image-fixed during zoom, without changing pointer-centered
+  trackpad zoom. Existing image-locked and screen-locked modes remain available.
 - **2026-08-07** — Added an assets-only Cloudflare Worker POC with project-local Wrangler, SPA fallback,
   local preview, dry-run validation, and deploy scripts. The initial temporary deploy was verified;
   its later account claim is recorded below.

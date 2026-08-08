@@ -8,7 +8,7 @@ import {
   effectiveView,
   fullButtonLabel,
   setWipeFromViewportPosition,
-  setWipeLock,
+  setWipeBehavior,
   setWipeAxis,
   stickySolo,
   tapButtonLabel,
@@ -27,7 +27,7 @@ function workspaceWithCamera(): Workspace {
       presentation: 'wipe',
       focus: 'a',
       axis: 'vertical',
-      lock: 'world',
+      behavior: 'world',
       position: 0.5,
       worldX: 0,
       worldY: 0,
@@ -119,7 +119,7 @@ describe('view state machine (presentation ⟂ focus)', () => {
       camera: { centerX: 42, centerY: -17, scale: 2.5 },
       comparison: {
         ...w.comparison,
-        lock: 'world',
+        behavior: 'world',
         position: 0.33,
         worldX: 12,
         worldY: -4,
@@ -128,7 +128,7 @@ describe('view state machine (presentation ⟂ focus)', () => {
     };
     const cameraBefore = w.camera;
     const wipeGeom = {
-      lock: w.comparison.lock,
+      behavior: w.comparison.behavior,
       position: w.comparison.position,
       worldX: w.comparison.worldX,
       worldY: w.comparison.worldY,
@@ -154,10 +154,10 @@ describe('view state machine (presentation ⟂ focus)', () => {
   });
 });
 
-describe('wipe lock', () => {
-  it('defaults to vertical world lock at center and wipe view mode', () => {
+describe('wipe navigation behavior', () => {
+  it('defaults to vertical hybrid behavior at center and wipe view mode', () => {
     const c = defaultComparison();
-    expect(c.lock).toBe('world');
+    expect(c.behavior).toBe('hybrid');
     expect(c.axis).toBe('vertical');
     expect(c.presentation).toBe('wipe');
     expect(c.position).toBe(0.5);
@@ -165,7 +165,27 @@ describe('wipe lock', () => {
     expect(c.worldY).toBe(0);
   });
 
-  it('world lock: zoom preserves worldX; display position changes', () => {
+  it('hybrid derives display from its world anchor during zoom', () => {
+    let w = workspaceWithCamera();
+    w = setWipeFromViewportPosition(w, 0.6, viewport);
+    w = setWipeBehavior(w, 'hybrid', viewport);
+    const worldBefore = w.comparison.worldX;
+
+    const zoomedCam = zoomAtScreenPoint(
+      w.camera!,
+      viewport,
+      { x: 40, y: 25 },
+      2,
+    );
+    w = { ...w, camera: zoomedCam };
+
+    expect(w.comparison.worldX).toBe(worldBefore);
+    expect(displayWipePosition(w.comparison, w.camera, viewport)).not.toBeCloseTo(
+      0.6,
+    );
+  });
+
+  it('image-locked zoom preserves worldX; display position changes', () => {
     let w = workspaceWithCamera();
     w = setWipeFromViewportPosition(w, 0.6, viewport);
     expect(w.comparison.worldX).toBeCloseTo(20);
@@ -195,11 +215,11 @@ describe('wipe lock', () => {
     expect(afterDisplay).not.toBeCloseTo(beforeDisplay);
   });
 
-  it('viewport lock: zoom preserves display position', () => {
+  it('screen-locked zoom preserves display position', () => {
     let w = workspaceWithCamera();
     w = setWipeFromViewportPosition(w, 0.6, viewport);
-    w = setWipeLock(w, 'viewport', viewport);
-    expect(w.comparison.lock).toBe('viewport');
+    w = setWipeBehavior(w, 'viewport', viewport);
+    expect(w.comparison.behavior).toBe('viewport');
     expect(w.comparison.position).toBeCloseTo(0.6);
 
     const zoomedCam = zoomAtScreenPoint(
@@ -214,17 +234,22 @@ describe('wipe lock', () => {
     expect(display).toBeCloseTo(0.6);
   });
 
-  it('switching lock preserves on-screen wipe', () => {
+  it('switching among all behaviors preserves the on-screen wipe', () => {
     let w = workspaceWithCamera();
     w = setWipeFromViewportPosition(w, 0.25, viewport);
     const before = displayWipePosition(w.comparison, w.camera, viewport);
 
-    w = setWipeLock(w, 'viewport', viewport);
+    w = setWipeBehavior(w, 'hybrid', viewport);
     expect(displayWipePosition(w.comparison, w.camera, viewport)).toBeCloseTo(
       before,
     );
 
-    w = setWipeLock(w, 'world', viewport);
+    w = setWipeBehavior(w, 'viewport', viewport);
+    expect(displayWipePosition(w.comparison, w.camera, viewport)).toBeCloseTo(
+      before,
+    );
+
+    w = setWipeBehavior(w, 'world', viewport);
     expect(displayWipePosition(w.comparison, w.camera, viewport)).toBeCloseTo(
       before,
     );

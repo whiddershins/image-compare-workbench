@@ -3,9 +3,14 @@
     SizeNormBasis,
     SizeNormReference,
     ViewportSize,
+    WipeBehavior,
     Workspace,
   } from '../../domain/model';
-  import { SIZE_NORM_BASES, SIZE_NORM_REFERENCES } from '../../domain/model';
+  import {
+    SIZE_NORM_BASES,
+    SIZE_NORM_REFERENCES,
+    WIPE_BEHAVIORS,
+  } from '../../domain/model';
   import { zoomPercent } from '../../domain/camera';
   import {
     sizeNormBasisDescription,
@@ -23,8 +28,8 @@
     WIPE_BUTTON_DESCRIPTION,
     wipeAxisDescription,
     wipeAxisLabel,
-    wipeLockDescription,
-    wipeLockLabel,
+    wipeBehaviorDescription,
+    wipeBehaviorLabel,
   } from '../../domain/wipe';
   import {
     enumerateFromFileList,
@@ -50,7 +55,7 @@
   const pct = $derived(zoomPercent(workspace.camera));
   const canFolder = supportsDirectoryPicker() || supportsWebkitDirectory();
   const sizeNorm = $derived(workspace.sizeNormalization);
-  const wipeLock = $derived(workspace.comparison.lock);
+  const wipeBehavior = $derived(workspace.comparison.behavior);
   const wipeAxis = $derived(workspace.comparison.axis);
   const presentation = $derived(workspace.comparison.presentation);
   const focus = $derived(workspace.comparison.focus);
@@ -58,7 +63,7 @@
   // Sticky radiogroup selection is presentation only; side-tap uses aria-pressed.
   const fullActive = $derived(presentation === 'full');
   const wipeActive = $derived(presentation === 'wipe');
-  /** Axis + wipe-lock only apply in wipe presentation. */
+  /** Wipe geometry controls only apply in wipe presentation. */
   const wipeChromeDisabled = $derived(presentation !== 'wipe');
 
   function fit() {
@@ -109,9 +114,10 @@
     );
   }
 
-  function toggleWipeLock() {
-    const next = wipeLock === 'world' ? 'viewport' : 'world';
-    controller.setWipeLock(next, viewport);
+  function onWipeBehaviorChange(e: Event) {
+    const behavior = (e.currentTarget as HTMLSelectElement)
+      .value as WipeBehavior;
+    controller.setWipeBehavior(behavior, viewport);
   }
 
   function toggleWipeAxis() {
@@ -313,21 +319,32 @@
     >
       {wipeAxisLabel(wipeAxis)}
     </button>
-    <button
-      type="button"
-      class="btn"
-      class:active-toggle={wipeLock === 'world' && !wipeChromeDisabled}
-      data-testid="wipe-lock-btn"
+    <label
+      class="size-mode"
+      class:disabled={wipeChromeDisabled}
       title={wipeChromeDisabled
-        ? 'Wipe lock applies in Wipe mode only'
-        : wipeLockDescription(wipeLock)}
-      aria-pressed={wipeLock === 'world'}
-      aria-label={wipeLockLabel(wipeLock)}
-      disabled={wipeChromeDisabled}
-      onclick={toggleWipeLock}
+        ? 'Wipe behavior applies in Wipe mode only'
+        : wipeBehaviorDescription(wipeBehavior)}
     >
-      {wipeLock === 'world' ? 'Wipe img' : 'Wipe scr'}
-    </button>
+      <span class="sr-only">Wipe behavior</span>
+      <span id="wipe-behavior-description" class="sr-only">
+        {wipeChromeDisabled
+          ? 'Available in Wipe mode only.'
+          : wipeBehaviorDescription(wipeBehavior)}
+      </span>
+      <select
+        data-testid="wipe-behavior-select"
+        aria-label="Wipe behavior"
+        aria-describedby="wipe-behavior-description"
+        value={wipeBehavior}
+        disabled={wipeChromeDisabled}
+        onchange={onWipeBehaviorChange}
+      >
+        {#each WIPE_BEHAVIORS as behavior}
+          <option value={behavior}>{wipeBehaviorLabel(behavior)}</option>
+        {/each}
+      </select>
+    </label>
     <span class="zoom-pct" data-testid="zoom-pct" aria-live="polite"
       >{pct}%</span
     >

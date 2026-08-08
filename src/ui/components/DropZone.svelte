@@ -1,6 +1,5 @@
 <script lang="ts">
   import {
-    enumerateFromDataTransfer,
     enumerateFromFileList,
     pickDirectoryFiles,
     supportsDirectoryPicker,
@@ -8,33 +7,17 @@
   } from '../../infrastructure/browser/enumerateFiles';
   import { controller } from '../stores/workspaceStore';
 
-  let dragOver = $state(false);
+  interface Props {
+    /** Parent owns global drop; highlight empty state when files are dragged. */
+    dragOver?: boolean;
+  }
+
+  let { dragOver = false }: Props = $props();
+
   let fileInput: HTMLInputElement | undefined = $state();
   let folderInput: HTMLInputElement | undefined = $state();
 
   const canFolderPicker = supportsDirectoryPicker() || supportsWebkitDirectory();
-
-  async function handleDrop(e: DragEvent) {
-    e.preventDefault();
-    dragOver = false;
-    if (!e.dataTransfer) return;
-    try {
-      const result = await enumerateFromDataTransfer(e.dataTransfer);
-      await controller.importDiscovered(result.files, result.issues);
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  function handleDragOver(e: DragEvent) {
-    e.preventDefault();
-    dragOver = true;
-  }
-
-  function handleDragLeave(e: DragEvent) {
-    e.preventDefault();
-    dragOver = false;
-  }
 
   async function onFilesSelected(e: Event) {
     const input = e.currentTarget as HTMLInputElement;
@@ -59,9 +42,6 @@
   class:drag-over={dragOver}
   role="region"
   aria-label="Import images"
-  ondrop={handleDrop}
-  ondragover={handleDragOver}
-  ondragleave={handleDragLeave}
 >
   <div class="panel">
     <p class="headline">Drop images or a folder here</p>

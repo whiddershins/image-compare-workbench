@@ -39,11 +39,13 @@ export interface CameraState {
 }
 
 /**
- * Where the wipe plane is anchored.
- * - world: fixed world coordinate along the wipe axis (default)
- * - viewport: fixed screen fraction (content slides under the line)
+ * How the wipe plane responds to camera navigation.
+ * - hybrid: screen-fixed while panning, image-fixed while zooming (default)
+ * - world: fixed world/image coordinate through both pan and zoom
+ * - viewport: fixed screen fraction through both pan and zoom
  */
-export type WipeLock = 'world' | 'viewport';
+export const WIPE_BEHAVIORS = ['hybrid', 'world', 'viewport'] as const;
+export type WipeBehavior = (typeof WIPE_BEHAVIORS)[number];
 
 /**
  * Wipe divider orientation.
@@ -72,24 +74,20 @@ export type ComparisonState = {
   readonly presentation: ViewPresentation;
   readonly focus: ViewFocus;
   readonly axis: WipeAxis;
-  readonly lock: WipeLock;
+  readonly behavior: WipeBehavior;
   /**
    * Normalized fraction along the wipe axis (0 = all B, 1 = all A).
-   * Authoritative when lock is 'viewport'. When lock is 'world', cache of
-   * last drag; display is derived from worldX/worldY + camera.
+   * Authoritative when behavior is 'viewport'. Otherwise this is a screen cache;
+   * display is derived from worldX/worldY + camera.
    */
   readonly position: number;
-  /**
-   * World-space X of the wipe plane (used when axis is vertical + world lock).
-   */
+  /** World-space X of the wipe plane for vertical hybrid/world behavior. */
   readonly worldX: number;
-  /**
-   * World-space Y of the wipe plane (used when axis is horizontal + world lock).
-   */
+  /** World-space Y of the wipe plane for horizontal hybrid/world behavior. */
   readonly worldY: number;
 };
 
-export const DEFAULT_WIPE_LOCK: WipeLock = 'world';
+export const DEFAULT_WIPE_BEHAVIOR: WipeBehavior = 'hybrid';
 export const DEFAULT_WIPE_AXIS: WipeAxis = 'vertical';
 export const DEFAULT_VIEW_PRESENTATION: ViewPresentation = 'wipe';
 export const DEFAULT_VIEW_FOCUS: ViewFocus = 'a';

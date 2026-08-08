@@ -229,6 +229,17 @@ test.describe('core comparison invariant', () => {
     const fullBtn = page.getByTestId('view-mode-full');
     const wipeBtn = page.getByTestId('view-mode-wipe');
     const tapBtn = page.getByTestId('side-tap-btn');
+    const wipeBehavior = page.getByTestId('wipe-behavior-select');
+    await expect(wipeBehavior).toHaveValue('hybrid');
+    await expect(wipeBehavior).toBeEnabled();
+    await expect(wipeBehavior.locator('option')).toHaveText([
+      'Hybrid',
+      'Image locked',
+      'Screen locked',
+    ]);
+    await wipeBehavior.selectOption('world');
+    await expect(wipeBehavior).toHaveValue('world');
+    await wipeBehavior.selectOption('hybrid');
 
     // Wipe → Full A
     await fullBtn.click();
@@ -236,12 +247,14 @@ test.describe('core comparison invariant', () => {
     await expect(fullBtn).toHaveAttribute('aria-checked', 'true');
     await expect(wipeBtn).toHaveAttribute('aria-checked', 'false');
     await expect(tapBtn).toHaveText('B tap');
+    await expect(wipeBehavior).toBeDisabled();
 
     // Full A → Full B (re-press)
     await fullBtn.click();
     await expect(viewport).toHaveAttribute('data-view', 'b');
     await expect(fullBtn).toHaveText('Full B');
     await expect(tapBtn).toHaveText('A tap');
+    await expect(wipeBehavior).toBeDisabled();
     // Radios still reflect sticky full while... (not tapping yet)
     await expect(fullBtn).toHaveAttribute('aria-checked', 'true');
 
@@ -252,6 +265,7 @@ test.describe('core comparison invariant', () => {
     await expect(fullBtn).toHaveAttribute('aria-checked', 'false');
     await expect(fullBtn).toHaveText('Full B');
     await expect(tapBtn).toHaveText('A tap');
+    await expect(wipeBehavior).toBeEnabled();
 
     // Side-hold: real mouse press on A/B tap (keyboard V is ignored while a button is focused)
     const tapBox = await tapBtn.boundingBox();
@@ -291,6 +305,49 @@ test.describe('core comparison invariant', () => {
     expect(nodeIdsAfter.b).toBe('node-b');
     expect(nodeIdsAfter.aSrc).toBe(nodeIdsBefore!.aSrc);
     expect(nodeIdsAfter.bSrc).toBe(nodeIdsBefore!.bSrc);
+  });
+
+  test('hybrid wipe compensates explicit pan without changing pointer zoom', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await importImages(page, fixtureFiles(3));
+
+    const viewport = page.getByTestId('compare-viewport');
+    const wipe = page.getByTestId('wipe-divider');
+    const wipeBehavior = page.getByTestId('wipe-behavior-select');
+    await expect(wipeBehavior).toHaveValue('hybrid');
+
+    await wipe.focus();
+    await page.keyboard.press('Shift+ArrowRight');
+    await page.keyboard.press('Shift+ArrowRight');
+    await page.keyboard.press('Shift+ArrowRight');
+    await expect(wipe).toHaveAttribute('aria-valuenow', '65');
+
+    const box = await viewport.boundingBox();
+    expect(box).toBeTruthy();
+
+    // Explicit pan keeps Hybrid fixed on screen and re-anchors its world point.
+    await page.mouse.move(box!.x + 30, box!.y + 30);
+    await page.mouse.down();
+    await page.mouse.move(box!.x + 60, box!.y + 40);
+    await page.mouse.up();
+    await expect(wipe).toHaveAttribute('aria-valuenow', '65');
+
+    // Pointer-centered zoom remains native; Hybrid follows its image/world point.
+    await page.mouse.move(box!.x + box!.width * 0.2, box!.y + box!.height / 2);
+    await page.keyboard.down('Control');
+    await page.mouse.wheel(0, -30);
+    await page.keyboard.up('Control');
+    await expect(wipe).not.toHaveAttribute('aria-valuenow', '65');
+
+    // Existing Screen locked retains a fixed viewport fraction on the same zoom.
+    await wipeBehavior.selectOption('viewport');
+    const screenLockedPosition = await wipe.getAttribute('aria-valuenow');
+    await page.keyboard.down('Control');
+    await page.mouse.wheel(0, -30);
+    await page.keyboard.up('Control');
+    await expect(wipe).toHaveAttribute('aria-valuenow', screenLockedPosition!);
   });
 
   test('empty-state imports report unsupported files', async ({ page }) => {

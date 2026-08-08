@@ -30,7 +30,7 @@
   /** Drawn view from presentation ⟂ focus, or opposite focus while tapping */
   const view = $derived(resolveView(workspace.comparison, sideTapping));
   const wipeAxis = $derived(workspace.comparison.axis);
-  /** On-screen wipe fraction (world-lock derives from camera each frame). */
+  /** Hybrid/image-locked derive the fraction from camera + world anchor. */
   const wipe = $derived(
     displayWipePosition(workspace.comparison, workspace.camera, viewport),
   );
@@ -115,7 +115,7 @@
       const dy = ev.clientY - lastY;
       lastX = ev.clientX;
       lastY = ev.clientY;
-      controller.pan(dx, dy);
+      controller.pan(viewport, dx, dy);
     }
     function onUp(ev: PointerEvent) {
       panning = false;
@@ -144,7 +144,7 @@
       return;
     }
 
-    controller.pan(-e.deltaX, -e.deltaY);
+    controller.pan(viewport, -e.deltaX, -e.deltaY);
   }
 </script>
 

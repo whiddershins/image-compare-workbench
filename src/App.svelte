@@ -3,6 +3,7 @@
   import type { Workspace } from './domain/model';
   import { emptyWorkspace } from './domain/workspaceTransitions';
   import { isEmpty } from './domain/workspaceTransitions';
+  import { enumerateFromDataTransfer } from './infrastructure/browser/enumerateFiles';
   import { controller } from './ui/stores/workspaceStore';
   import DropZone from './ui/components/DropZone.svelte';
   import ImageRail from './ui/components/ImageRail.svelte';
@@ -21,8 +22,50 @@
   let spaceHeld = $state(false);
   let sideTapping = $state(false);
   let viewportSize = $state({ width: 800, height: 600 });
+  /** File drag-over highlight (empty or loaded session). */
+  let fileDragOver = $state(false);
+  let fileDragDepth = 0;
 
   const loaded = $derived(!isEmpty(workspace));
+
+  function isFileDrag(e: DragEvent): boolean {
+    return !!e.dataTransfer?.types?.includes('Files');
+  }
+
+  function onRootDragEnter(e: DragEvent) {
+    if (!isFileDrag(e)) return;
+    e.preventDefault();
+    fileDragDepth += 1;
+    fileDragOver = true;
+  }
+
+  function onRootDragOver(e: DragEvent) {
+    if (!isFileDrag(e)) return;
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+  }
+
+  function onRootDragLeave(e: DragEvent) {
+    if (!isFileDrag(e)) return;
+    e.preventDefault();
+    fileDragDepth = Math.max(0, fileDragDepth - 1);
+    if (fileDragDepth === 0) fileDragOver = false;
+  }
+
+  async function onRootDrop(e: DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    fileDragDepth = 0;
+    fileDragOver = false;
+    if (!e.dataTransfer || !isFileDrag(e)) return;
+    try {
+      // Appends when workspace already has images; creates set when empty.
+      const result = await enumerateFromDataTransfer(e.dataTransfer);
+      await controller.importDiscovered(result.files, result.issues);
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
   onMount(() => {
     workspace = controller.getWorkspace();
@@ -159,33 +202,32 @@
       spaceHeld = false;
     }
 
-    // Prevent browser navigating on file drop at window level
-    function preventNav(e: DragEvent) {
-      e.preventDefault();
-    }
-
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
     window.addEventListener('blur', onBlur);
-    window.addEventListener('dragover', preventNav);
-    window.addEventListener('drop', preventNav);
 
     return () => {
       for (const u of unsubs) u();
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('blur', onBlur);
-      window.removeEventListener('dragover', preventNav);
-      window.removeEventListener('drop', preventNav);
       controller.destroy();
     };
   });
 
 </script>
 
-<div class="app-root">
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+  class="app-root"
+  class:file-drag-over={fileDragOver && loaded}
+  ondragenter={onRootDragEnter}
+  ondragover={onRootDragOver}
+  ondragleave={onRootDragLeave}
+  ondrop={onRootDrop}
+>
   {#if !loaded}
-    <DropZone />
+    <DropZone dragOver={fileDragOver} />
   {:else}
     <div class="workbench">
       <ImageRail side="a" {workspace} {resourceVersion} />
@@ -212,6 +254,11 @@
       </div>
       <ImageRail side="b" {workspace} {resourceVersion} />
     </div>
+    {#if fileDragOver}
+      <div class="drop-overlay" aria-hidden="true">
+        <span>Drop to add images</span>
+      </div>
+    {/if}
   {/if}
 
   {#if loaded || importing || summaryText || errorText}

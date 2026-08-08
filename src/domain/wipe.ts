@@ -6,7 +6,7 @@ import type {
   ViewFocus,
   ViewPresentation,
   WipeAxis,
-  WipeLock,
+  WipeBehavior,
   Workspace,
 } from './model';
 import {
@@ -14,7 +14,7 @@ import {
   DEFAULT_VIEW_PRESENTATION,
   DEFAULT_WIPE,
   DEFAULT_WIPE_AXIS,
-  DEFAULT_WIPE_LOCK,
+  DEFAULT_WIPE_BEHAVIOR,
 } from './model';
 import { screenToWorld, worldToScreen } from './geometry';
 
@@ -29,7 +29,7 @@ export function defaultComparison(): ComparisonState {
     presentation: DEFAULT_VIEW_PRESENTATION,
     focus: DEFAULT_VIEW_FOCUS,
     axis: DEFAULT_WIPE_AXIS,
-    lock: DEFAULT_WIPE_LOCK,
+    behavior: DEFAULT_WIPE_BEHAVIOR,
     position: DEFAULT_WIPE,
     worldX: 0,
     worldY: 0,
@@ -135,7 +135,7 @@ export function tapButtonDescription(focus: ViewFocus): string {
 
 /**
  * Viewport-normalized wipe position used for clip-path and the divider.
- * World lock uses worldX (vertical axis) or worldY (horizontal axis).
+ * Hybrid and image-locked behavior derive from worldX/worldY + camera.
  */
 export function displayWipePosition(
   comparison: ComparisonState,
@@ -143,7 +143,7 @@ export function displayWipePosition(
   viewport: ViewportSize,
 ): number {
   if (
-    comparison.lock === 'viewport' ||
+    comparison.behavior === 'viewport' ||
     !camera ||
     viewport.width <= 0 ||
     viewport.height <= 0
@@ -207,14 +207,14 @@ export function setWipeFromViewportPosition(
 }
 
 /**
- * Toggle or set wipe lock. Preserves the current on-screen wipe location.
+ * Set wipe navigation behavior while preserving its on-screen location.
  */
-export function setWipeLock(
+export function setWipeBehavior(
   workspace: Workspace,
-  lock: WipeLock,
+  behavior: WipeBehavior,
   viewport: ViewportSize,
 ): Workspace {
-  if (workspace.comparison.lock === lock) return workspace;
+  if (workspace.comparison.behavior === behavior) return workspace;
 
   const camera = workspace.camera;
   let position = clampWipePosition(workspace.comparison.position);
@@ -246,7 +246,7 @@ export function setWipeLock(
     comparison: {
       ...workspace.comparison,
       kind: 'wipe',
-      lock,
+      behavior,
       position,
       worldX,
       worldY,
@@ -302,15 +302,26 @@ export function setWipeAxis(
   };
 }
 
-export function wipeLockLabel(lock: WipeLock): string {
-  return lock === 'world' ? 'Wipe: image' : 'Wipe: screen';
+export function wipeBehaviorLabel(behavior: WipeBehavior): string {
+  switch (behavior) {
+    case 'hybrid':
+      return 'Hybrid';
+    case 'world':
+      return 'Image locked';
+    case 'viewport':
+      return 'Screen locked';
+  }
 }
 
-export function wipeLockDescription(lock: WipeLock): string {
-  if (lock === 'world') {
-    return 'Wipe stays on the same world/image position through pan and zoom (default).';
+export function wipeBehaviorDescription(behavior: WipeBehavior): string {
+  switch (behavior) {
+    case 'hybrid':
+      return 'Pan moves the images beneath a screen-fixed wipe; zoom keeps the wipe attached to the same image position.';
+    case 'world':
+      return 'Wipe stays attached to the same image position through pan and zoom.';
+    case 'viewport':
+      return 'Wipe stays fixed in the viewport through pan and zoom; image content moves beneath it.';
   }
-  return 'Wipe stays fixed in the viewport; image content slides under it.';
 }
 
 export function wipeAxisLabel(axis: WipeAxis): string {

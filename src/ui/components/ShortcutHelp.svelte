@@ -74,12 +74,13 @@
         (A/B). Wipe never changes focus, so side-tap stays put. Re-press Full to flip
         focus. Hold <strong>V</strong> / side-tap for the opposite full.
       </p>
-      <h3>Wipe axis &amp; lock</h3>
+      <h3>Wipe axis &amp; behavior</h3>
       <p class="note">
         <strong>V / H</strong>: vertical (A left) or horizontal (A above) wipe.
-        <strong>Wipe img</strong> (default): divider tracks a fixed place on the
-        images through pan and zoom.
-        <strong>Wipe scr</strong>: divider fixed in the viewport.
+        <strong>Hybrid</strong> (default): pan moves the images beneath a fixed
+        divider; zoom keeps the divider attached to the same image position.
+        <strong>Image locked</strong>: attached through pan and zoom.
+        <strong>Screen locked</strong>: fixed in the viewport through pan and zoom.
       </p>
     </div>
   </div>

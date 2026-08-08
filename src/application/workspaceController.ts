@@ -6,7 +6,7 @@ import type {
   ViewportSize,
   DrawnView,
   WipeAxis,
-  WipeLock,
+  WipeBehavior,
   Workspace,
 } from '../domain/model';
 import { emptyWorkspace, isEmpty } from '../domain/workspaceTransitions';
@@ -25,7 +25,7 @@ import {
   effectiveView,
   setWipeAxis,
   setWipeFromViewportPosition,
-  setWipeLock,
+  setWipeBehavior,
   tapTarget,
 } from '../domain/wipe';
 import {
@@ -370,8 +370,8 @@ export class WorkspaceController {
     this.setWorkspace(setWipeFromViewportPosition(this.workspace, position, vp));
   }
 
-  setWipeLock(lock: WipeLock, viewport: ViewportSize): void {
-    this.setWorkspace(setWipeLock(this.workspace, lock, viewport));
+  setWipeBehavior(behavior: WipeBehavior, viewport: ViewportSize): void {
+    this.setWorkspace(setWipeBehavior(this.workspace, behavior, viewport));
   }
 
   setWipeAxis(axis: WipeAxis, viewport: ViewportSize): void {
@@ -439,8 +439,8 @@ export class WorkspaceController {
     );
   }
 
-  pan(dx: number, dy: number): void {
-    this.setWorkspace(panWorkspace(this.workspace, dx, dy));
+  pan(viewport: ViewportSize, dx: number, dy: number): void {
+    this.setWorkspace(panWorkspace(this.workspace, viewport, dx, dy));
   }
 
   private beginSideLoad(side: Side, assetId: AssetId): void {

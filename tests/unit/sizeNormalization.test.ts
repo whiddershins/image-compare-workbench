@@ -173,7 +173,7 @@ describe('size normalization (orthogonal basis × reference)', () => {
         presentation: 'wipe',
         focus: 'a',
         axis: 'vertical',
-        lock: 'world',
+        behavior: 'world',
         position: 0.33,
         worldX: 0,
         worldY: 0,
