@@ -98,6 +98,38 @@ describe('size normalization (orthogonal basis × reference)', () => {
     expect(eSmall).toBeCloseTo(eLarge);
   });
 
+  it('min-edge × pair matches shorter edges', () => {
+    const w = withNorm(workspaceWithPair(small, large), {
+      basis: 'min-edge',
+      reference: 'pair',
+    });
+    const pair = pairContext(w);
+    const sSmall = imageWorldScale(small, w.sizeNormalization, pair);
+    const sLarge = imageWorldScale(large, w.sizeNormalization, pair);
+    const eSmall = Math.min(small.width, small.height) * sSmall;
+    const eLarge = Math.min(large.width, large.height) * sLarge;
+    expect(eSmall).toBeCloseTo(eLarge);
+    expect(eSmall).toBeCloseTo(
+      Math.max(
+        Math.min(small.width, small.height),
+        Math.min(large.width, large.height),
+      ),
+    );
+  });
+
+  it('min-edge × lock A scales B to A min edge', () => {
+    const w = withNorm(workspaceWithPair(small, large), {
+      basis: 'min-edge',
+      reference: 'a',
+    });
+    const pair = pairContext(w);
+    expect(imageWorldScale(small, w.sizeNormalization, pair)).toBe(1);
+    const sB = imageWorldScale(large, w.sizeNormalization, pair);
+    expect(Math.min(large.width, large.height) * sB).toBeCloseTo(
+      Math.min(small.width, small.height),
+    );
+  });
+
   it('height × lock A keeps A native and scales B to A height', () => {
     const w = withNorm(workspaceWithPair(small, large), {
       basis: 'height',

@@ -93,7 +93,7 @@ Two **orthogonal** toolbar controls (aspect always preserved; not full registrat
 | Basis | Behavior |
 |-------|----------|
 | Native px | 1 world unit = 1 source pixel (reference ignored) |
-| Height / Width / Max edge | Equalize that dimension in world space |
+| Height / Width / Max edge / Min edge | Equalize that dimension in world space |
 
 **Reference** — who owns the target size:
 

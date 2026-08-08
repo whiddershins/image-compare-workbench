@@ -59,6 +59,7 @@ export function imageWorldScale(
 function measure(asset: ImageAsset, basis: Exclude<SizeNormBasis, 'native'>): number {
   if (basis === 'height') return asset.height;
   if (basis === 'width') return asset.width;
+  if (basis === 'min-edge') return Math.min(asset.width, asset.height);
   return Math.max(asset.width, asset.height);
 }
 
@@ -131,6 +132,8 @@ export function sizeNormBasisLabel(basis: SizeNormBasis): string {
       return 'Width';
     case 'max-edge':
       return 'Max edge';
+    case 'min-edge':
+      return 'Min edge';
   }
 }
 
@@ -155,6 +158,8 @@ export function sizeNormBasisDescription(basis: SizeNormBasis): string {
       return 'Equalize image widths in world space (aspect preserved).';
     case 'max-edge':
       return 'Equalize the longer edge in world space (aspect preserved).';
+    case 'min-edge':
+      return 'Equalize the shorter edge in world space (aspect preserved).';
   }
 }
 

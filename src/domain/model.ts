@@ -97,9 +97,14 @@ export const DEFAULT_VIEW_FOCUS: ViewFocus = 'a';
 /**
  * What dimension is equalized into world space (orthogonal to reference).
  * - native: 1 world unit = 1 source pixel; reference is ignored
- * - height | width | max-edge: uniform scale so that dimension matches
+ * - height | width | max-edge | min-edge: uniform scale so that dimension matches
  */
-export type SizeNormBasis = 'native' | 'height' | 'width' | 'max-edge';
+export type SizeNormBasis =
+  | 'native'
+  | 'height'
+  | 'width'
+  | 'max-edge'
+  | 'min-edge';
 
 /**
  * Who owns the target size (orthogonal to basis).
@@ -119,6 +124,7 @@ export const SIZE_NORM_BASES: readonly SizeNormBasis[] = [
   'height',
   'width',
   'max-edge',
+  'min-edge',
 ] as const;
 
 export const SIZE_NORM_REFERENCES: readonly SizeNormReference[] = [
