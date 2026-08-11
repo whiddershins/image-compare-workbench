@@ -21,6 +21,7 @@ import {
 } from '../domain/workspaceTransitions';
 import {
   applyCycleFull,
+  applySplitPresentation,
   applyWipePresentation,
   effectiveView,
   setWipeAxis,
@@ -34,7 +35,7 @@ import {
   setCamera100Percent,
   zoomWorkspaceAtPoint,
   zoomWorkspaceCenter,
-  type PanSource,
+  type HybridPanMode,
 } from '../domain/camera';
 import type { Point } from '../domain/model';
 import { summarizeImportIssues } from '../domain/importPolicy';
@@ -46,6 +47,15 @@ import {
 } from './importBatch';
 import type { DiscoveredFile } from '../infrastructure/browser/enumerateFiles';
 import { SelectionLoader } from './selectionLoader';
+
+export interface ImportDiscoveryResult {
+  readonly files: readonly DiscoveredFile[];
+  readonly issues: readonly ImportIssue[];
+}
+
+type ImportDiscoveryOutcome =
+  | { readonly ok: true; readonly value: ImportDiscoveryResult }
+  | { readonly ok: false; readonly error: unknown };
 
 export type AppError =
   | { readonly kind: 'selection'; readonly message: string }
@@ -178,6 +188,11 @@ export class WorkspaceController {
     this.setWorkspace(applyWipePresentation(this.workspace));
   }
 
+  /** Side-by-side control: presentation only — focus unchanged. */
+  setSplitView(): void {
+    this.setWorkspace(applySplitPresentation(this.workspace));
+  }
+
   private emitWorkspace(): void {
     for (const l of this.workspaceListeners) l(this.workspace);
   }
@@ -226,13 +241,56 @@ export class WorkspaceController {
       return Promise.resolve();
     }
 
+    return this.importDiscovery(
+      Promise.resolve({ files: discovered, issues: preIssues }),
+    );
+  }
+
+  /**
+   * Reserve import order and generation before asynchronous discovery settles.
+   * Callers start browser discovery while creating the supplied promise.
+   */
+  importDiscovery(
+    discovery: PromiseLike<ImportDiscoveryResult>,
+  ): Promise<void> {
     const queuedGeneration = this.generation;
+    // Observe rejection immediately even when this request is queued behind
+    // another import. The resulting promise never rejects.
+    const outcome: Promise<ImportDiscoveryOutcome> = Promise.resolve(
+      discovery,
+    ).then(
+      (value) => ({ ok: true, value }),
+      (error: unknown) => ({ ok: false, error }),
+    );
+
+    return this.enqueueImport(outcome, queuedGeneration);
+  }
+
+  private enqueueImport(
+    discovery: Promise<ImportDiscoveryOutcome>,
+    queuedGeneration: number,
+  ): Promise<void> {
     this.pendingImports += 1;
     this.setImporting(true);
 
     const job = this.importTail.then(async () => {
       if (this.generation !== queuedGeneration) return;
-      await this.runImport(discovered, preIssues, queuedGeneration);
+      const outcome = await discovery;
+      if (this.generation !== queuedGeneration) return;
+      if (!outcome.ok) {
+        this.setError({
+          kind: 'import',
+          message:
+            outcome.error instanceof Error
+              ? outcome.error.message
+              : 'Import discovery failed',
+        });
+        return;
+      }
+
+      const { files, issues } = outcome.value;
+      if (files.length === 0 && issues.length === 0) return;
+      await this.runImport(files, issues, queuedGeneration);
     });
 
     // One unexpected failure must not prevent later imports from running.
@@ -302,6 +360,7 @@ export class WorkspaceController {
           : null;
       this.emitSummary();
     } catch (e) {
+      if (this.generation !== generation) return;
       this.setError({
         kind: 'unexpected',
         message: e instanceof Error ? e.message : 'Import failed',
@@ -311,6 +370,9 @@ export class WorkspaceController {
 
   clear(): void {
     this.generation += 1;
+    // Browser folder traversal may be unabortable. Detach its old queue so a
+    // new session can import immediately; generation checks discard its result.
+    this.importTail = Promise.resolve();
     this.pendingImports = 0;
     this.setImporting(false);
     this.endSideTap(); // full interaction reset
@@ -444,9 +506,11 @@ export class WorkspaceController {
     viewport: ViewportSize,
     dx: number,
     dy: number,
-    source: PanSource = 'drag',
+    hybridPan: HybridPanMode,
   ): void {
-    this.setWorkspace(panWorkspace(this.workspace, viewport, dx, dy, source));
+    this.setWorkspace(
+      panWorkspace(this.workspace, viewport, dx, dy, hybridPan),
+    );
   }
 
   private beginSideLoad(side: Side, assetId: AssetId): void {
@@ -475,6 +539,7 @@ export class WorkspaceController {
 
   destroy(): void {
     this.generation += 1;
+    this.importTail = Promise.resolve();
     this.pendingImports = 0;
     this.importing = false;
     this.sideTapping = false;

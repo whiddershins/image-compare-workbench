@@ -38,13 +38,18 @@ export function defaultComparison(): ComparisonState {
 
 // ── View state machine (presentation ⟂ focus) ──────────────────────────
 
-/** Solo side shown when presentation is full. */
+/**
+ * Sticky drawn view from presentation (ignores side-tap).
+ * wipe → wipe composite; split → side-by-side; full → focus solo.
+ */
 export function stickySolo(c: ComparisonState): DrawnView {
-  return c.presentation === 'wipe' ? 'wipe' : c.focus;
+  if (c.presentation === 'wipe') return 'wipe';
+  if (c.presentation === 'split') return 'split';
+  return c.focus;
 }
 
 /**
- * Side-tap hold shows the opposite of focus (independent of wipe/full).
+ * Side-tap hold shows the opposite of focus (independent of presentation).
  * focus a → B tap; focus b → A tap.
  */
 export function tapTarget(focus: ViewFocus): ViewFocus {
@@ -59,9 +64,12 @@ export function effectiveView(
   return tapping ? tapTarget(c.focus) : stickySolo(c);
 }
 
-/** Full control: enter full if on wipe; if already full, flip focus a↔b. */
+/**
+ * Full control: enter full from wipe/split (focus unchanged);
+ * if already full, flip focus a↔b.
+ */
 export function cycleFull(c: ComparisonState): ComparisonState {
-  if (c.presentation === 'wipe') {
+  if (c.presentation !== 'full') {
     return { ...c, presentation: 'full' }; // focus unchanged
   }
   return {
@@ -75,6 +83,12 @@ export function cycleFull(c: ComparisonState): ComparisonState {
 export function setWipePresentation(c: ComparisonState): ComparisonState {
   if (c.presentation === 'wipe') return c;
   return { ...c, presentation: 'wipe' };
+}
+
+/** Side-by-side control: presentation only — never touches focus. */
+export function setSplitPresentation(c: ComparisonState): ComparisonState {
+  if (c.presentation === 'split') return c;
+  return { ...c, presentation: 'split' };
 }
 
 export function setPresentation(
@@ -106,6 +120,13 @@ export function applyWipePresentation(workspace: Workspace): Workspace {
   };
 }
 
+export function applySplitPresentation(workspace: Workspace): Workspace {
+  return {
+    ...workspace,
+    comparison: setSplitPresentation(workspace.comparison),
+  };
+}
+
 export function fullButtonLabel(focus: ViewFocus): string {
   return focus === 'b' ? 'Full B' : 'Full A';
 }
@@ -115,7 +136,7 @@ export function tapButtonLabel(focus: ViewFocus): string {
 }
 
 export function fullButtonDescription(c: ComparisonState): string {
-  if (c.presentation === 'wipe') {
+  if (c.presentation !== 'full') {
     return `Show full ${c.focus.toUpperCase()} (focus). Press again to flip A/B.`;
   }
   return c.focus === 'a'
@@ -126,9 +147,29 @@ export function fullButtonDescription(c: ComparisonState): string {
 export const WIPE_BUTTON_DESCRIPTION =
   'A/B wipe composite. Does not change Full A/B focus or side-tap.';
 
+export const SPLIT_BUTTON_DESCRIPTION =
+  'Side-by-side A | B with shared pan/zoom. Does not change Full A/B focus or side-tap.';
+
 export function tapButtonDescription(focus: ViewFocus): string {
   const t = tapTarget(focus);
-  return `Hold to show full ${t.toUpperCase()}. Release restores Wipe or Full ${focus.toUpperCase()}.`;
+  return `Hold to show full ${t.toUpperCase()}. Release restores Wipe, Side-by-side, or Full ${focus.toUpperCase()}.`;
+}
+
+/**
+ * Viewport used for camera navigation math (fit / zoom-at / scene transform).
+ * Side-by-side uses half host width so each pane frames the same world region.
+ */
+export function presentationViewport(
+  presentation: ViewPresentation,
+  host: ViewportSize,
+): ViewportSize {
+  if (presentation === 'split') {
+    return {
+      width: Math.max(0, host.width / 2),
+      height: host.height,
+    };
+  }
+  return host;
 }
 
 // ── Wipe geometry ──────────────────────────────────────────────────────

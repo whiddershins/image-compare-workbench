@@ -54,12 +54,20 @@ export function fitCurrentPair(
   padding: number = FIT_PADDING,
 ): Workspace {
   const bounds = selectedPairBounds(workspace);
-  if (!bounds || viewport.width <= 0 || viewport.height <= 0) {
+  // Side-by-side fits into one pane (half host width) so both frames read fully.
+  const fitVp =
+    workspace.comparison.presentation === 'split'
+      ? {
+          width: Math.max(0, viewport.width / 2),
+          height: viewport.height,
+        }
+      : viewport;
+  if (!bounds || fitVp.width <= 0 || fitVp.height <= 0) {
     return workspace;
   }
   return {
     ...workspace,
-    camera: fitBounds(bounds, viewport, padding),
+    camera: fitBounds(bounds, fitVp, padding),
   };
 }
 
@@ -100,20 +108,15 @@ export function zoomWorkspaceCenter(
   };
 }
 
-/**
- * How pan interacts with hybrid wipe behavior.
- * - drag: pointer click-hold / Space+drag — images slide under a fixed divider
- * - wheel: two-finger trackpad / mouse wheel pan — camera + wipe move as one world
- * Other wipe behaviors ignore this (world/viewport rules apply uniformly).
- */
-export type PanSource = 'drag' | 'wheel';
+/** Desired divider coupling for a pan while Hybrid behavior is active. */
+export type HybridPanMode = 'hold-divider' | 'carry-divider';
 
 export function panWorkspace(
   workspace: Workspace,
   viewport: ViewportSize,
   dx: number,
   dy: number,
-  source: PanSource = 'drag',
+  hybridPan: HybridPanMode,
 ): Workspace {
   if (!workspace.camera) return workspace;
   const wipeBeforePan = displayWipePosition(
@@ -126,10 +129,12 @@ export function panWorkspace(
     camera: panByScreenDelta(workspace.camera, dx, dy),
   };
 
-  // Hybrid drag only: screen-fixed wipe (re-anchor world under fixed divider).
-  // Hybrid wheel: world-locked — wipe rides with the image (no re-anchor).
-  // Zoom never calls this path, so pointer-centered zoom stays image-attached.
-  if (workspace.comparison.behavior !== 'hybrid' || source !== 'drag') {
+  // Holding re-anchors the world point beneath the unchanged screen position;
+  // carrying preserves the world anchor so camera and divider move together.
+  if (
+    workspace.comparison.behavior !== 'hybrid' ||
+    hybridPan !== 'hold-divider'
+  ) {
     return next;
   }
 

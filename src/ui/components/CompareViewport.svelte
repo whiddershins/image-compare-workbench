@@ -5,6 +5,7 @@
   import {
     displayWipePosition,
     effectiveView as resolveView,
+    presentationViewport,
   } from '../../domain/wipe';
   import { controller } from '../stores/workspaceStore';
   import ComparisonScene from './ComparisonScene.svelte';
@@ -29,6 +30,7 @@
   const camera = $derived(workspace.camera);
   /** Drawn view from presentation ⟂ focus, or opposite focus while tapping */
   const view = $derived(resolveView(workspace.comparison, sideTapping));
+  const isSplit = $derived(view === 'split');
   const wipeAxis = $derived(workspace.comparison.axis);
   /** Hybrid/image-locked derive the fraction from camera + world anchor. */
   const wipe = $derived(
@@ -43,10 +45,15 @@
     assetB ? assetWorldScaleInWorkspace(workspace, assetB) : 1,
   );
 
+  // Half-width viewport for side-by-side scene transform + zoom-at math.
+  const paneViewport = $derived(
+    presentationViewport('split', viewport),
+  );
+
   // Keep both scenes mounted always — only CSS visibility/clip changes.
   // Remounting <img> on every A/B tap caused intermittent decode blinks.
-  const showA = $derived(view === 'a' || view === 'wipe');
-  const showB = $derived(view === 'b' || view === 'wipe');
+  const showA = $derived(view === 'a' || view === 'wipe' || view === 'split');
+  const showB = $derived(view === 'b' || view === 'wipe' || view === 'split');
   const showWipeChrome = $derived(view === 'wipe');
   // Full A: no clip (100% A). Wipe: live wipe %. Full B: A layer hidden.
   const wipePercent = $derived(view === 'wipe' ? wipe * 100 : 100);
@@ -115,8 +122,8 @@
       const dy = ev.clientY - lastY;
       lastX = ev.clientX;
       lastY = ev.clientY;
-      // Hybrid: drag slides images under a fixed wipe divider.
-      controller.pan(viewport, dx, dy, 'drag');
+      // Hybrid wipe: drag slides images under a fixed wipe divider.
+      controller.pan(viewport, dx, dy, 'hold-divider');
     }
     function onUp(ev: PointerEvent) {
       panning = false;
@@ -134,19 +141,27 @@
     if (!camera || !hostEl) return;
     e.preventDefault();
     const rect = hostEl.getBoundingClientRect();
-    const point = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    };
+    const hostX = e.clientX - rect.left;
+    const hostY = e.clientY - rect.top;
 
     if (e.ctrlKey || e.metaKey) {
       const factor = Math.exp(-e.deltaY * 0.01);
-      controller.zoomAt(viewport, point, factor);
+      if (isSplit && paneViewport.width > 0) {
+        // Zoom relative to the pane under the cursor (shared camera).
+        const inRight = hostX >= paneViewport.width;
+        const point = {
+          x: hostX - (inRight ? paneViewport.width : 0),
+          y: hostY,
+        };
+        controller.zoomAt(paneViewport, point, factor);
+      } else {
+        controller.zoomAt(viewport, { x: hostX, y: hostY }, factor);
+      }
       return;
     }
 
-    // Hybrid: two-finger / wheel pan moves camera + wipe as one world.
-    controller.pan(viewport, -e.deltaX, -e.deltaY, 'wheel');
+    // Hybrid wipe: two-finger / wheel pan moves camera + wipe as one world.
+    controller.pan(viewport, -e.deltaX, -e.deltaY, 'carry-divider');
   }
 </script>
 
@@ -162,66 +177,103 @@
   aria-label="Comparison viewport"
 >
   {#if camera && viewport.width > 0}
-    <!-- Both layers stay mounted; toggle visibility only (no <img> remount). -->
-    <div class="layer layer-b" class:hidden={!showB} aria-hidden={!showB}>
-      <ComparisonScene
-        asset={assetB}
-        imageUrl={sideB.url}
-        {camera}
-        {viewport}
-        worldScale={scaleB}
-        loading={sideB.loading}
-        error={sideB.error}
-        label="B"
-      />
-    </div>
+    {#if isSplit}
+      <!-- Side-by-side: shared camera, half-width pane viewport each. -->
+      <div class="split" data-testid="split-layout">
+        <div class="pane pane-a" data-testid="split-pane-a">
+          <ComparisonScene
+            asset={assetA}
+            imageUrl={sideA.url}
+            {camera}
+            viewport={paneViewport}
+            worldScale={scaleA}
+            loading={sideA.loading}
+            error={sideA.error}
+            label="A"
+          />
+          <span class="pane-label" data-testid="label-a"
+            >A · {assetA?.name ?? '—'}</span
+          >
+        </div>
+        <div class="split-gutter" aria-hidden="true"></div>
+        <div class="pane pane-b" data-testid="split-pane-b">
+          <ComparisonScene
+            asset={assetB}
+            imageUrl={sideB.url}
+            {camera}
+            viewport={paneViewport}
+            worldScale={scaleB}
+            loading={sideB.loading}
+            error={sideB.error}
+            label="B"
+          />
+          <span class="pane-label" data-testid="label-b"
+            >B · {assetB?.name ?? '—'}</span
+          >
+        </div>
+      </div>
+    {:else}
+      <!-- Wipe / full: stacked layers; toggle visibility only (no remount). -->
+      <div class="layer layer-b" class:hidden={!showB} aria-hidden={!showB}>
+        <ComparisonScene
+          asset={assetB}
+          imageUrl={sideB.url}
+          {camera}
+          {viewport}
+          worldScale={scaleB}
+          loading={sideB.loading}
+          error={sideB.error}
+          label="B"
+        />
+      </div>
 
-    <div
-      class="layer layer-a"
-      class:hidden={!showA}
-      class:clip-active={showWipeChrome}
-      class:axis-vertical={wipeAxis === 'vertical'}
-      class:axis-horizontal={wipeAxis === 'horizontal'}
-      class:full-unclipped={view === 'a'}
-      style:--wipe-percent="{wipePercent}%"
-      data-testid="clip-a"
-      data-axis={wipeAxis}
-      aria-hidden={!showA}
-    >
-      <ComparisonScene
-        asset={assetA}
-        imageUrl={sideA.url}
-        {camera}
-        {viewport}
-        worldScale={scaleA}
-        loading={sideA.loading}
-        error={sideA.error}
-        label="A"
-      />
-    </div>
+      <div
+        class="layer layer-a"
+        class:hidden={!showA}
+        class:clip-active={showWipeChrome}
+        class:axis-vertical={wipeAxis === 'vertical'}
+        class:axis-horizontal={wipeAxis === 'horizontal'}
+        class:full-unclipped={view === 'a'}
+        style:--wipe-percent="{wipePercent}%"
+        data-testid="clip-a"
+        data-axis={wipeAxis}
+        aria-hidden={!showA}
+      >
+        <ComparisonScene
+          asset={assetA}
+          imageUrl={sideA.url}
+          {camera}
+          {viewport}
+          worldScale={scaleA}
+          loading={sideA.loading}
+          error={sideA.error}
+          label="A"
+        />
+      </div>
 
-    {#if showWipeChrome}
-      <WipeDivider position={wipe} axis={wipeAxis} {viewport} />
-    {/if}
-
-    <div class="labels" aria-hidden="true">
-      {#if view === 'a'}
-        <span class="label-a" data-testid="label-a"
-          >A · {assetA?.name ?? '—'}{sideTapping ? ' · A tap' : ''}</span
-        >
-      {:else if view === 'b'}
-        <span class="label-b" data-testid="label-b"
-          >B · {assetB?.name ?? '—'}{sideTapping ? ' · B tap' : ''}</span
-        >
-      {:else}
-        <span class="label-a" data-testid="label-a"
-          >A · {assetA?.name ?? '—'}</span
-        >
-        <span class="label-b" data-testid="label-b"
-          >B · {assetB?.name ?? '—'}</span
-        >
+      {#if showWipeChrome}
+        <WipeDivider position={wipe} axis={wipeAxis} {viewport} />
       {/if}
-    </div>
+
+      <div class="labels" aria-hidden="true">
+        {#if view === 'a'}
+          <span class="label-a" data-testid="label-a"
+            >A · {assetA?.name ?? '—'}{sideTapping ? ' · A tap' : ''}</span
+          >
+        {:else if view === 'b'}
+          <span class="label-b" data-testid="label-b"
+            >B · {assetB?.name ?? '—'}{sideTapping ? ' · B tap' : ''}</span
+          >
+        {:else}
+          <span class="label-a" data-testid="label-a"
+            >A · {assetA?.name ?? '—'}</span
+          >
+          <span class="label-b" data-testid="label-b"
+            >B · {assetB?.name ?? '—'}</span
+          >
+        {/if}
+      </div>
+    {/if}
   {:else}
     <div class="empty-vp">Measuring viewport…</div>
   {/if}
@@ -268,6 +320,47 @@
   /* Full A: entire frame is A */
   .layer-a.full-unclipped {
     clip-path: none;
+  }
+
+  .split {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: row;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .pane {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .split-gutter {
+    flex: 0 0 1px;
+    background: var(--border-strong, #3a4048);
+    z-index: 4;
+  }
+
+  .pane-label {
+    position: absolute;
+    left: 8px;
+    bottom: 8px;
+    z-index: 6;
+    font-size: 11px;
+    color: var(--text);
+    background: rgba(0, 0, 0, 0.55);
+    padding: 2px 8px;
+    border-radius: 3px;
+    max-width: calc(100% - 16px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
   }
 
   .labels {

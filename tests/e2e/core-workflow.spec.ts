@@ -228,6 +228,7 @@ test.describe('core comparison invariant', () => {
 
     const fullBtn = page.getByTestId('view-mode-full');
     const wipeBtn = page.getByTestId('view-mode-wipe');
+    const splitBtn = page.getByTestId('view-mode-split');
     const tapBtn = page.getByTestId('side-tap-btn');
     const wipeBehavior = page.getByTestId('wipe-behavior-select');
     await expect(wipeBehavior).toHaveValue('hybrid');
@@ -246,6 +247,7 @@ test.describe('core comparison invariant', () => {
     await expect(viewport).toHaveAttribute('data-view', 'a');
     await expect(fullBtn).toHaveAttribute('aria-checked', 'true');
     await expect(wipeBtn).toHaveAttribute('aria-checked', 'false');
+    await expect(splitBtn).toHaveAttribute('aria-checked', 'false');
     await expect(tapBtn).toHaveText('B tap');
     await expect(wipeBehavior).toBeDisabled();
 
@@ -286,7 +288,7 @@ test.describe('core comparison invariant', () => {
     await expect(tapBtn).toHaveAttribute('aria-pressed', 'false');
     await expect(tapBtn).toHaveText('A tap');
 
-    // Same <img> element instances still present (no remount)
+    // Same <img> element instances still present through wipe/full/tap (no remount)
     const nodeIdsAfter = await page.evaluate(() => {
       const a = document.querySelector('img[data-side="a"]') as
         | (HTMLImageElement & { __nodeId?: string })
@@ -305,6 +307,28 @@ test.describe('core comparison invariant', () => {
     expect(nodeIdsAfter.b).toBe('node-b');
     expect(nodeIdsAfter.aSrc).toBe(nodeIdsBefore!.aSrc);
     expect(nodeIdsAfter.bSrc).toBe(nodeIdsBefore!.bSrc);
+
+    // Wipe → side-by-side (focus still B); uses a separate layout branch
+    await splitBtn.click();
+    await expect(viewport).toHaveAttribute('data-view', 'split');
+    await expect(splitBtn).toHaveAttribute('aria-checked', 'true');
+    await expect(wipeBtn).toHaveAttribute('aria-checked', 'false');
+    await expect(fullBtn).toHaveText('Full B');
+    await expect(tapBtn).toHaveText('A tap');
+    await expect(wipeBehavior).toBeDisabled();
+    await expect(page.getByTestId('split-layout')).toBeVisible();
+    await expect(page.getByTestId('split-pane-a')).toBeVisible();
+    await expect(page.getByTestId('split-pane-b')).toBeVisible();
+    await expect(page.getByTestId('label-a')).toBeVisible();
+    await expect(page.getByTestId('label-b')).toBeVisible();
+
+    // Side-by-side → Wipe restores composite; focus still B
+    await wipeBtn.click();
+    await expect(viewport).toHaveAttribute('data-view', 'wipe');
+    await expect(wipeBtn).toHaveAttribute('aria-checked', 'true');
+    await expect(splitBtn).toHaveAttribute('aria-checked', 'false');
+    await expect(tapBtn).toHaveText('A tap');
+    await expect(wipeBehavior).toBeEnabled();
   });
 
   test('hybrid wipe compensates explicit pan without changing pointer zoom', async ({
@@ -334,12 +358,18 @@ test.describe('core comparison invariant', () => {
     await page.mouse.up();
     await expect(wipe).toHaveAttribute('aria-valuenow', '65');
 
+    // Two-finger/wheel pan carries Hybrid with the image instead of pinning it.
+    await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+    await page.mouse.wheel(40, 0);
+    await expect(wipe).not.toHaveAttribute('aria-valuenow', '65');
+    const wheelPosition = await wipe.getAttribute('aria-valuenow');
+
     // Pointer-centered zoom remains native; Hybrid follows its image/world point.
     await page.mouse.move(box!.x + box!.width * 0.2, box!.y + box!.height / 2);
     await page.keyboard.down('Control');
     await page.mouse.wheel(0, -30);
     await page.keyboard.up('Control');
-    await expect(wipe).not.toHaveAttribute('aria-valuenow', '65');
+    await expect(wipe).not.toHaveAttribute('aria-valuenow', wheelPosition!);
 
     // Existing Screen locked retains a fixed viewport fraction on the same zoom.
     await wipeBehavior.selectOption('viewport');
@@ -348,6 +378,39 @@ test.describe('core comparison invariant', () => {
     await page.mouse.wheel(0, -30);
     await page.keyboard.up('Control');
     await expect(wipe).toHaveAttribute('aria-valuenow', screenLockedPosition!);
+  });
+
+  test('root prevents non-file drops from navigating away', async ({ page }) => {
+    await page.goto('/');
+    const initialUrl = page.url();
+
+    const prevented = await page.locator('.panel').evaluate((target) => {
+      const transfer = new DataTransfer();
+      transfer.setData('text/uri-list', 'https://example.com/');
+      const dispatch = (type: 'dragover' | 'drop') => {
+        const event = new DragEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          dataTransfer: transfer,
+        });
+        return {
+          defaultPrevented: !target.dispatchEvent(event),
+          eventPrevented: event.defaultPrevented,
+        };
+      };
+      return { dragover: dispatch('dragover'), drop: dispatch('drop') };
+    });
+
+    expect(prevented.dragover).toEqual({
+      defaultPrevented: true,
+      eventPrevented: true,
+    });
+    expect(prevented.drop).toEqual({
+      defaultPrevented: true,
+      eventPrevented: true,
+    });
+    expect(page.url()).toBe(initialUrl);
+    await expect(page.getByText('Drop images or a folder here')).toBeVisible();
   });
 
   test('empty-state imports report unsupported files', async ({ page }) => {

@@ -60,17 +60,17 @@ export type WipeAxis = 'vertical' | 'horizontal';
 
 /**
  * Two orthogonal sticky axes for the main view:
- * - presentation: wipe composite vs solo full frame
+ * - presentation: wipe composite | solo full frame | side-by-side split
  * - focus: which side is "home" when full, and drives A tap / B tap
  *
- * Switching Wipe ↔ Full must not change focus, so side-tap stays stable.
+ * Switching presentation must not change focus, so side-tap stays stable.
  * Re-pressing Full flips focus a↔b. Momentary side-tap is session UI only.
  */
-export type ViewPresentation = 'wipe' | 'full';
+export type ViewPresentation = 'wipe' | 'full' | 'split';
 export type ViewFocus = 'a' | 'b';
 
 /** What the viewport draws (sticky or after side-tap overlay). */
-export type DrawnView = 'wipe' | 'a' | 'b';
+export type DrawnView = 'wipe' | 'a' | 'b' | 'split';
 
 export type ComparisonState = {
   readonly kind: 'wipe';

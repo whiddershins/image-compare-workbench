@@ -46,8 +46,8 @@
         <div><dt>A / B</dt><dd>Activate side A or B</dd></div>
         <div><dt>↑ / ↓</dt><dd>Previous / next image on active side</dd></div>
         <div><dt>S</dt><dd>Swap A and B</dd></div>
-        <div><dt>Full / Wipe</dt><dd>Presentation; Full re-press flips focus A↔B</dd></div>
-        <div><dt>Hold V / A·B tap</dt><dd>Opposite of focus; Wipe does not change tap</dd></div>
+        <div><dt>Full / Wipe / A|B</dt><dd>Presentation; Full re-press flips focus A↔B</dd></div>
+        <div><dt>Hold V / A·B tap</dt><dd>Opposite of focus; Wipe/A|B do not change tap</dd></div>
         <div><dt>F</dt><dd>Fit current pair</dd></div>
         <div><dt>0</dt><dd>100% zoom</dd></div>
         <div><dt>− / =</dt><dd>Zoom out / in</dd></div>
@@ -71,9 +71,10 @@
       </p>
       <h3>View mode</h3>
       <p class="note">
-        Sticky state is <strong>presentation</strong> (Wipe/Full) × <strong>focus</strong>
-        (A/B). Wipe never changes focus, so side-tap stays put. Re-press Full to flip
-        focus. Hold <strong>V</strong> / side-tap for the opposite full.
+        Sticky state is <strong>presentation</strong> (Wipe / Full / A|B side-by-side)
+        × <strong>focus</strong> (A/B). Wipe and A|B never change focus, so side-tap
+        stays put. Re-press Full to flip focus. Hold <strong>V</strong> / side-tap for
+        the opposite full. Side-by-side uses a shared camera (pan/zoom both panes).
       </p>
       <h3>Wipe axis &amp; behavior</h3>
       <p class="note">

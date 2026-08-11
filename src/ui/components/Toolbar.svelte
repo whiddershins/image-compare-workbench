@@ -23,6 +23,7 @@
   import {
     fullButtonDescription,
     fullButtonLabel,
+    SPLIT_BUTTON_DESCRIPTION,
     tapButtonDescription,
     tapButtonLabel,
     WIPE_BUTTON_DESCRIPTION,
@@ -63,6 +64,7 @@
   // Sticky radiogroup selection is presentation only; side-tap uses aria-pressed.
   const fullActive = $derived(presentation === 'full');
   const wipeActive = $derived(presentation === 'wipe');
+  const splitActive = $derived(presentation === 'split');
   /** Wipe geometry controls only apply in wipe presentation. */
   const wipeChromeDisabled = $derived(presentation !== 'wipe');
 
@@ -76,6 +78,10 @@
 
   function onWipeClick() {
     controller.setWipeView();
+  }
+
+  function onSplitClick() {
+    controller.setSplitView();
   }
 
   function onTapDown(e: PointerEvent) {
@@ -136,8 +142,7 @@
 
   async function addFolder() {
     if (supportsDirectoryPicker()) {
-      const result = await pickDirectoryFiles();
-      await controller.importDiscovered(result.files, result.issues);
+      await controller.importDiscovery(pickDirectoryFiles());
     } else {
       folderInput?.click();
     }
@@ -215,6 +220,18 @@
         onclick={onWipeClick}
       >
         Wipe
+      </button>
+      <button
+        type="button"
+        class="btn seg-btn"
+        class:active={splitActive}
+        role="radio"
+        aria-checked={splitActive}
+        data-testid="view-mode-split"
+        title={SPLIT_BUTTON_DESCRIPTION}
+        onclick={onSplitClick}
+      >
+        A|B
       </button>
     </div>
     <button

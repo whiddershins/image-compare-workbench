@@ -206,9 +206,10 @@ Worth adding if tightening v0:
 
 ### P5 — Wipe navigation behavior (implemented 2026-08-06, refined 2026-08-07)
 
-- **Default:** `hybrid` — explicit pan keeps the wipe screen-fixed by re-anchoring
-  its world coordinate; zoom keeps that world coordinate fixed and leaves native
-  pointer-centered trackpad zoom untouched.
+- **Default:** `hybrid` — pointer drag keeps the wipe screen-fixed by re-anchoring
+  its world coordinate; two-finger/wheel pan carries that world anchor with the
+  image; zoom keeps the anchor fixed and leaves native pointer-centered trackpad
+  zoom untouched.
 - **Image locked:** `world` — wipe tracks a fixed world X/Y through pan and zoom.
 - **Screen locked:** `viewport` — wipe stays at a fixed screen fraction through pan and zoom.
 - Toolbar dropdown: **Hybrid** / **Image locked** / **Screen locked**.
@@ -367,8 +368,9 @@ When you land deploy or QA, append a short **Changelog** subsection below rather
 - **2026-08-07** — Wipe **V / H** axis (vertical A-left default; horizontal A-above). World lock uses worldX or worldY.
 - **2026-08-07** — Side-tap/view switch keeps A/B scenes mounted (no img remount blink).
 - **2026-08-07** — Wipe navigation gained a default **Hybrid** mode: screen-fixed
-  during explicit pan and image-fixed during zoom, without changing pointer-centered
-  trackpad zoom. Existing image-locked and screen-locked modes remain available.
+  during pointer drag, world-coupled during two-finger/wheel pan, and image-fixed
+  during zoom without changing pointer-centered trackpad intent. Existing
+  image-locked and screen-locked modes remain available.
 - **2026-08-07** — Added an assets-only Cloudflare Worker POC with project-local Wrangler, SPA fallback,
   local preview, dry-run validation, and deploy scripts. The initial temporary deploy was verified;
   its later account claim is recorded below.
@@ -378,3 +380,6 @@ When you land deploy or QA, append a short **Changelog** subsection below rather
 - **2026-08-07** — Claimed the temporary Worker into the maintainer's personal Cloudflare account.
   The production URL is persistent and returned HTTP 200 for both `/` and an SPA fallback route.
   Durable Objects remain future AI bridge work.
+- **2026-08-07** — Async drop/folder discovery now reserves controller generation and queue order
+  at gesture time. Clear detaches stale discovery/processing so late results cannot repopulate or
+  block a new session; non-file drops remain navigation-safe.

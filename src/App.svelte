@@ -40,8 +40,9 @@
   }
 
   function onRootDragOver(e: DragEvent) {
-    if (!isFileDrag(e)) return;
+    // Suppress browser navigation for every payload; only files become imports.
     e.preventDefault();
+    if (!isFileDrag(e)) return;
     if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
   }
 
@@ -57,14 +58,11 @@
     e.stopPropagation();
     fileDragDepth = 0;
     fileDragOver = false;
-    if (!e.dataTransfer || !isFileDrag(e)) return;
-    try {
-      // Appends when workspace already has images; creates set when empty.
-      const result = await enumerateFromDataTransfer(e.dataTransfer);
-      await controller.importDiscovered(result.files, result.issues);
-    } catch (err) {
-      console.error(err);
-    }
+    const transfer = e.dataTransfer;
+    if (!transfer || !isFileDrag(e)) return;
+    // Discovery starts inside this gesture; the controller reserves ordering
+    // and cancellation before the folder traversal can settle.
+    await controller.importDiscovery(enumerateFromDataTransfer(transfer));
   }
 
   onMount(() => {

@@ -131,7 +131,7 @@ Hold **V** or the tap button. Same camera; wipe geometry unchanged.
 | Control | Option | Behavior |
 |---------|--------|----------|
 | **V / H** | Vertical (default) / Horizontal | V: A left, B right. H: A above, B below. 0 = all B, 1 = all A |
-| Wipe behavior | **Hybrid** (default) | Deliberate pan moves images beneath the divider; zoom keeps its image coordinate |
+| Wipe behavior | **Hybrid** (default) | Drag moves images beneath a fixed divider; two-finger/wheel pan carries the divider with the image; zoom keeps its image coordinate |
 | | **Image locked** | Divider tracks its world position through pan and zoom |
 | | **Screen locked** | Divider stays fixed in the viewport through pan and zoom |
 

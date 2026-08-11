@@ -35,3 +35,4 @@ playwright/.cache
 .env.*
 .dev.vars
 .dev.vars.*
+.patchbay/

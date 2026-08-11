@@ -29,8 +29,7 @@
 
   async function onFolderPickerClick() {
     if (supportsDirectoryPicker()) {
-      const result = await pickDirectoryFiles();
-      await controller.importDiscovered(result.files, result.issues);
+      await controller.importDiscovery(pickDirectoryFiles());
       return;
     }
     folderInput?.click();

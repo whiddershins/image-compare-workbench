@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest';
 import type { ComparisonState, Workspace } from '../../src/domain/model';
 import {
   applyCycleFull,
+  applySplitPresentation,
   applyWipePresentation,
   cycleFull,
   displayWipePosition,
   effectiveView,
   fullButtonLabel,
+  presentationViewport,
   setWipeFromViewportPosition,
   setWipeBehavior,
   setWipeAxis,
@@ -70,12 +72,16 @@ describe('view state machine (presentation ⟂ focus)', () => {
     );
   });
 
-  it('cycleFull: wipe→full keeps focus; full flips focus', () => {
+  it('cycleFull: wipe/split→full keeps focus; full flips focus', () => {
     expect(cycleFull(cmp({ presentation: 'wipe', focus: 'a' }))).toMatchObject({
       presentation: 'full',
       focus: 'a',
     });
     expect(cycleFull(cmp({ presentation: 'wipe', focus: 'b' }))).toMatchObject({
+      presentation: 'full',
+      focus: 'b',
+    });
+    expect(cycleFull(cmp({ presentation: 'split', focus: 'b' }))).toMatchObject({
       presentation: 'full',
       focus: 'b',
     });
@@ -89,7 +95,7 @@ describe('view state machine (presentation ⟂ focus)', () => {
     });
   });
 
-  it('set wipe presentation does not change focus (side-tap stays put)', () => {
+  it('set wipe/split presentation does not change focus (side-tap stays put)', () => {
     let w = workspaceWithCamera();
     w = applyCycleFull(w); // full A
     w = applyCycleFull(w); // full B, focus b
@@ -102,14 +108,37 @@ describe('view state machine (presentation ⟂ focus)', () => {
     expect(tapButtonLabel(w.comparison.focus)).toBe('A tap');
     expect(stickySolo(w.comparison)).toBe('wipe');
     expect(effectiveView(w.comparison, true)).toBe('a');
+
+    w = applySplitPresentation(w);
+    expect(w.comparison.presentation).toBe('split');
+    expect(w.comparison.focus).toBe('b');
+    expect(stickySolo(w.comparison)).toBe('split');
+    expect(effectiveView(w.comparison, false)).toBe('split');
+    expect(effectiveView(w.comparison, true)).toBe('a');
   });
 
   it('stickySolo and effectiveView', () => {
     expect(stickySolo(cmp({ presentation: 'wipe', focus: 'b' }))).toBe('wipe');
     expect(stickySolo(cmp({ presentation: 'full', focus: 'b' }))).toBe('b');
+    expect(stickySolo(cmp({ presentation: 'split', focus: 'a' }))).toBe(
+      'split',
+    );
     expect(effectiveView(cmp({ presentation: 'full', focus: 'a' }), false)).toBe(
       'a',
     );
+    expect(
+      effectiveView(cmp({ presentation: 'split', focus: 'a' }), true),
+    ).toBe('b');
+  });
+
+  it('presentationViewport halves width for split', () => {
+    const host = { width: 800, height: 400 };
+    expect(presentationViewport('wipe', host)).toEqual(host);
+    expect(presentationViewport('full', host)).toEqual(host);
+    expect(presentationViewport('split', host)).toEqual({
+      width: 400,
+      height: 400,
+    });
   });
 
   it('presentation transitions preserve non-default camera and wipe geometry', () => {

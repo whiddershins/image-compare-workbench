@@ -93,7 +93,7 @@ describe('camera geometry', () => {
       axisDelta: 20,
     },
   ] as const)(
-    'hybrid $axis drag pan keeps the divider screen-fixed and reanchors $worldKey',
+    'hybrid $axis hold-divider pan stays screen-fixed and reanchors $worldKey',
     ({ axis, dx, dy, worldKey, inactiveKey, axisDelta }) => {
       const workspace = workspaceWithWipe('hybrid', axis, 0.65);
       const displayBefore = displayWipePosition(
@@ -104,7 +104,13 @@ describe('camera geometry', () => {
       const worldBefore = workspace.comparison[worldKey];
       const inactiveBefore = workspace.comparison[inactiveKey];
 
-      const next = panWorkspace(workspace, viewport, dx, dy, 'drag');
+      const next = panWorkspace(
+        workspace,
+        viewport,
+        dx,
+        dy,
+        'hold-divider',
+      );
 
       expect(
         displayWipePosition(next.comparison, next.camera, viewport),
@@ -130,7 +136,7 @@ describe('camera geometry', () => {
       worldKey: 'worldY' as const,
     },
   ])(
-    'hybrid $axis wheel pan moves world with camera (no wipe reanchor)',
+    'hybrid $axis carry-divider pan moves world without reanchoring',
     ({ axis, dx, dy, worldKey }) => {
       const workspace = workspaceWithWipe('hybrid', axis, 0.65);
       const displayBefore = displayWipePosition(
@@ -140,7 +146,13 @@ describe('camera geometry', () => {
       );
       const worldBefore = workspace.comparison[worldKey];
 
-      const next = panWorkspace(workspace, viewport, dx, dy, 'wheel');
+      const next = panWorkspace(
+        workspace,
+        viewport,
+        dx,
+        dy,
+        'carry-divider',
+      );
 
       expect(next.comparison[worldKey]).toBe(worldBefore);
       expect(
@@ -158,7 +170,13 @@ describe('camera geometry', () => {
     );
     const worldBefore = workspace.comparison.worldX;
 
-    const next = panWorkspace(workspace, viewport, 20, 0);
+    const next = panWorkspace(
+      workspace,
+      viewport,
+      20,
+      0,
+      'hold-divider',
+    );
 
     expect(next.comparison.worldX).toBe(worldBefore);
     expect(
@@ -170,7 +188,13 @@ describe('camera geometry', () => {
     const workspace = workspaceWithWipe('viewport', 'vertical', 0.65);
     const comparisonBefore = workspace.comparison;
 
-    const next = panWorkspace(workspace, viewport, 20, 0);
+    const next = panWorkspace(
+      workspace,
+      viewport,
+      20,
+      0,
+      'hold-divider',
+    );
 
     expect(next.comparison).toBe(comparisonBefore);
     expect(
