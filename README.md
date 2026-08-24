@@ -4,6 +4,17 @@ Client-side tool for inspecting **any pair of images from a larger set** while k
 
 The image set is the primary object. Side A and side B are temporary selections from that set. Changing A or B never moves the camera or wipe — so you can zoom into a feature, then cycle related frames without losing your place.
 
+**Canonical:** https://contraptions.bookofsarth.com/image-compare-workbench
+**Live:** https://image-compare-workbench.marshy-runner.workers.dev
+**Shelf:** https://contraptions.bookofsarth.com
+**Source:** https://github.com/whiddershins/image-compare-workbench
+**Sarth:** https://sarth.net
+**Tech:** [TECH.md](./TECH.md)
+
+Hosted on Cloudflare Workers.
+
+The A-folder vs B-folder split is artificial. See [DESIGN.md](./DESIGN.md).
+
 ## Privacy
 
 **Images stay in your browser. Nothing is uploaded.**
@@ -115,13 +126,14 @@ Two orthogonal sticky axes:
 
 | Axis | Values | Notes |
 |------|--------|--------|
-| **presentation** | Wipe \| Full | Mutually exclusive |
+| **presentation** | Wipe \| Full \| A\|B | Mutually exclusive |
 | **focus** | A \| B | Which full side is “home”; drives side-tap |
 
 | Control | Behavior |
 |---------|----------|
 | **Full A/B** | Enter Full (keeps focus). Re-press flips focus A↔B. |
 | **Wipe** | Presentation only — **does not change focus or A/B tap**. |
+| **A\|B** | Side-by-side with shared pan/zoom. Does not change focus or A/B tap. |
 | **B tap** / **A tap** | Hold: show opposite of focus. Label depends on focus only. |
 
 Hold **V** or the tap button. Same camera; wipe geometry unchanged.
@@ -145,7 +157,7 @@ Original v0 was vertical + screen-fixed only.
 | `↑` / `↓` | Cycle active side |
 | `S` | Swap |
 | `F` | Fit |
-| `0` | 100% |
+| `0` | Actual size (1:1 / 100%) |
 | `-` / `=` | Zoom out / in |
 | `Space` + drag | Pan |
 | `?` | Shortcuts |

@@ -55,6 +55,12 @@
       {/if}
     </div>
     <p class="privacy">Images stay in your browser.<br />Nothing is uploaded.</p>
+    <p class="colophon">
+      <a href="https://github.com/whiddershins/image-compare-workbench">GitHub</a>
+      · <a href="https://sarth.net">sarth.net</a>
+      · <a href="https://contraptions.bookofsarth.com">Contraptions</a>
+      · Hosted on Cloudflare Workers
+    </p>
   </div>
 
   <input
@@ -143,5 +149,21 @@
     font-size: 12px;
     color: var(--text-faint);
     line-height: 1.5;
+  }
+
+  .colophon {
+    margin: 16px 0 0;
+    font-size: 11px;
+    color: var(--text-faint);
+    line-height: 1.6;
+  }
+
+  .colophon a {
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+
+  .colophon a:hover {
+    color: var(--text);
   }
 </style>
