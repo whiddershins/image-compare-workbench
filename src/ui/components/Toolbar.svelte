@@ -236,7 +236,7 @@
     </div>
     <button
       type="button"
-      class="btn"
+      class="btn tap-btn"
       class:active-toggle={sideTapping}
       data-testid="side-tap-btn"
       title={`${tapButtonDescription(focus)} (hold V)`}
@@ -274,9 +274,18 @@
       class="btn"
       onclick={() => controller.zoom100()}
       data-testid="zoom-100-btn"
+      title="Actual size (1 source pixel = 1 CSS pixel). Shortcut 0"
+      aria-label="Actual size, 100%"
     >
-      100%
+      1:1
     </button>
+    <span
+      class="zoom-pct"
+      data-testid="zoom-pct"
+      title="Current zoom"
+      aria-live="polite"
+      aria-label={`Current zoom ${pct}%`}>{pct}%</span
+    >
     <button
       type="button"
       class="btn"
@@ -362,9 +371,6 @@
         {/each}
       </select>
     </label>
-    <span class="zoom-pct" data-testid="zoom-pct" aria-live="polite"
-      >{pct}%</span
-    >
   </div>
 
   <div class="group">
@@ -403,12 +409,16 @@
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
     user-select: none;
+    overflow-x: auto;
+    overflow-y: hidden;
   }
 
   .group {
     display: flex;
     align-items: center;
+    flex-wrap: nowrap;
     gap: 4px;
+    flex-shrink: 0;
   }
 
   .btn {
@@ -418,6 +428,12 @@
     padding: 4px 10px;
     font-size: 12px;
     min-width: 28px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .tap-btn {
+    white-space: nowrap;
   }
 
   .btn:hover {
@@ -439,6 +455,7 @@
     border: 1px solid var(--border);
     border-radius: 3px;
     overflow: hidden;
+    flex-shrink: 0;
   }
 
   .seg-btn {
@@ -471,6 +488,12 @@
     font-variant-numeric: tabular-nums;
     font-size: 12px;
     color: var(--text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .size-mode {
+    flex-shrink: 0;
   }
 
   .size-mode select {
