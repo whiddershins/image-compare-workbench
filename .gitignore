@@ -36,3 +36,6 @@ playwright/.cache
 .dev.vars
 .dev.vars.*
 .patchbay/
+
+# Original screen recordings stay local; the shelf hosts the web mp4.
+media/

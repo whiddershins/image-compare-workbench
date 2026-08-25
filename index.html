@@ -4,14 +4,116 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Image Compare Workbench</title>
-    <meta name="description" content="Local click-rail image compare. One folder, two pickers. Images stay in your browser." />
+    <meta name="description" content="Drop a folder of images. Click a reference on one rail, click candidates on the other. The camera stays put. Local, in the browser. Sarth Calhoun, used at Third Wall Studio." />
     <link rel="canonical" href="https://contraptions.bookofsarth.com/image-compare-workbench" />
+    <link rel="alternate" type="application/json" href="https://contraptions.bookofsarth.com/image-compare-workbench.json" />
+    <meta name="theme-color" content="#0d0f12" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Contraptions" />
     <meta property="og:title" content="Image Compare Workbench" />
-    <meta property="og:description" content="Local click-rail image compare. One folder, two pickers. Images stay in your browser." />
+    <meta property="og:description" content="Drop a folder of images. Click a reference on one rail, click candidates on the other. The camera stays put. Local, in the browser." />
     <meta property="og:url" content="https://contraptions.bookofsarth.com/image-compare-workbench" />
+    <meta property="og:image" content="https://contraptions.bookofsarth.com/shots/image-compare-workbench-og.jpg" />
+    <meta property="og:image:secure_url" content="https://contraptions.bookofsarth.com/shots/image-compare-workbench-og.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Image Compare Workbench, two click-rails over one image pool" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@noisegroove" />
+    <meta name="twitter:title" content="Image Compare Workbench" />
+    <meta name="twitter:description" content="Drop a folder of images. Click a reference on one rail, click candidates on the other. The camera stays put. Local, in the browser." />
+    <meta name="twitter:image" content="https://contraptions.bookofsarth.com/shots/image-compare-workbench-og.jpg" />
+    <meta name="twitter:image:alt" content="Image Compare Workbench, two click-rails over one image pool" />
+    <link rel="image_src" href="https://contraptions.bookofsarth.com/shots/image-compare-workbench-og.jpg" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Image Compare Workbench",
+      "url": "https://contraptions.bookofsarth.com/image-compare-workbench",
+      "description": "Drop a folder of images. Click a reference on one rail, click candidates on the other. The camera stays put. All processing is local in the browser.",
+      "image": "https://contraptions.bookofsarth.com/shots/image-compare-workbench-og.jpg",
+      "screenshot": "https://contraptions.bookofsarth.com/shots/image-compare-workbench-poster.jpg",
+      "applicationCategory": "MultimediaApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires a modern browser. Images never leave the client.",
+      "isAccessibleForFree": true,
+      "datePublished": "2026-08-24",
+      "dateModified": "2026-08-24",
+      "author": {
+        "@type": "Person",
+        "name": "Sarth Calhoun",
+        "url": "https://sarth.net",
+        "sameAs": [
+          "https://x.com/noisegroove",
+          "https://github.com/whiddershins"
+        ]
+      },
+      "creator": { "@type": "Person", "name": "Sarth Calhoun", "url": "https://sarth.net" },
+      "publisher": { "@type": "Person", "name": "Sarth Calhoun", "url": "https://sarth.net" },
+      "isPartOf": {
+        "@type": "CreativeWork",
+        "name": "Contraptions",
+        "url": "https://contraptions.bookofsarth.com/"
+      },
+      "codeRepository": "https://github.com/whiddershins/image-compare-workbench",
+      "sameAs": [
+        "https://github.com/whiddershins/image-compare-workbench",
+        "https://image-compare-workbench.marshy-runner.workers.dev"
+      ],
+      "mentions": [
+        { "@type": "SoftwareApplication", "name": "Burlap", "url": "https://burlap.app" },
+        { "@type": "Organization", "name": "Third Wall Studio", "url": "https://thirdwallstudio.com" },
+        { "@type": "SoftwareApplication", "name": "JuxtaposeJS", "url": "https://juxtapose.knightlab.com/" },
+        { "@type": "SoftwareApplication", "name": "tev", "url": "https://github.com/Tom94/tev" },
+        { "@type": "SoftwareApplication", "name": "Slow.pics", "url": "https://slow.pics/" }
+      ]
+    }
+    </script>
+    <style>
+      #about {
+        max-width: 40rem;
+        margin: 0 auto;
+        padding: 2rem 1rem 3rem;
+        background: #0d0f12;
+        color: #e6e6e6;
+        font: 15px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      #about h1 { font-size: 1.1rem; letter-spacing: .06em; text-transform: uppercase; }
+      #about h2 { font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; color: #7c848d; margin: 1.5rem 0 .4rem; }
+      #about a { color: #8fc7ff; }
+      #about ul { padding-left: 1.2rem; }
+      #about .meta { color: #7c848d; font-size: .8rem; }
+    </style>
   </head>
   <body>
     <div id="app"></div>
+    <article id="about">
+      <h1>Image Compare Workbench</h1>
+      <p>Image Compare Workbench is a local click-rail image compare by Sarth Calhoun. Drop a folder of images. Click a reference on one rail, click candidates on the other. The camera stays put. Used at <a href="https://thirdwallstudio.com">Third Wall Studio</a>.</p>
+      <p>Canonical: <a href="https://contraptions.bookofsarth.com/image-compare-workbench">contraptions.bookofsarth.com/image-compare-workbench</a>. Part of <a href="https://contraptions.bookofsarth.com/">Contraptions</a>. Source: <a href="https://github.com/whiddershins/image-compare-workbench">github.com/whiddershins/image-compare-workbench</a>. Sarth: <a href="https://sarth.net">sarth.net</a>. Hosted on Cloudflare Workers.</p>
+
+      <h2>How to use</h2>
+      <p>Drop a folder, or pick files. One shared pool fills both rails. Click a thumb on the A rail, click a thumb on the B rail. Pan, zoom, wipe. Click another candidate. The view does not reset.</p>
+      <p>If a thumb is already A, it shows muted on B (and the other way around). Click the muted thumb to swap. <kbd>S</kbd> swaps too. Wipe: drag the divider, or drag the image under a held divider. <kbd>V</kbd> / <kbd>H</kbd> for vertical or horizontal. Full A/B fills one side. Size matching is two dials: which dimension to equalize, and who owns the size.</p>
+      <p>Keyboard: <kbd>A</kbd> / <kbd>B</kbd> pick a side, arrows cycle, <kbd>F</kbd> fit, <kbd>0</kbd> actual size, <kbd>-</kbd> / <kbd>=</kbd> zoom, space-drag pan, <kbd>?</kbd> shortcuts. JPEG, PNG, WebP, GIF, AVIF. Not SVG, HEIC, RAW, EXR, PDF, or video.</p>
+
+      <h2>What it is</h2>
+      <p>The image set is the object. A and B are two picks from that set, not two folders. Two click-rails over one pool, so both sides of the comparison are one click away. One shared pan, zoom, and wipe. Change A or B and you stay on the feature you were looking at. The A-folder versus B-folder split is not a missing feature.</p>
+
+      <h2>Why</h2>
+      <p>The whole loop in one place: folder in, reference on one rail, candidates on the other, stay where you are. Camera never resets. Wipe never jumps. Nothing uploaded. The two-file slider is a solved widget. This is a workbench for a set.</p>
+
+      <h2>Privacy</h2>
+      <p>Images stay in the browser as local File objects and object URLs. No accounts, no analytics, no upload.</p>
+
+      <h2>Context</h2>
+      <p><strong>Part of:</strong> <a href="https://contraptions.bookofsarth.com/">Contraptions</a>, small machines by Sarth Calhoun. Related: <a href="https://burlap.app">Burlap</a> (visual reference prompting at Third Wall Studio).</p>
+      <p><strong>Prior art.</strong> Web wipe sliders: <a href="https://juxtapose.knightlab.com/">JuxtaposeJS</a>, <a href="https://zurb.com/playground/twentytwenty">TwentyTwenty</a>, <a href="https://www.npmjs.com/package/img-comparison-slider">img-comparison-slider</a>. Render and research viewers that pick two from a list and hold the camera: <a href="https://github.com/Tom94/tev">tev</a>, <a href="https://github.com/wkjarosz/hdrview">HDRView</a>. Upscaling: <a href="https://github.com/the-database/img-ab">img-ab</a>, <a href="https://github.com/Sirosky/Simple-Image-Compare">Simple Image Compare</a>. Photographers: <a href="https://helpx.adobe.com/lightroom-classic/help/browse-compare-photos.html">Lightroom Classic</a>, <a href="https://docs.digikam.org/en/light_table/lighttable_operation.html">digiKam Light Table</a>, <a href="https://support.captureone.com/hc/en-us/articles/360002481017">Capture One</a>. Frames and gens: <a href="https://slow.pics/">Slow.pics</a>, <a href="https://www.nvidia.com/en-us/geforce/technologies/icat/">NVIDIA ICAT</a>, <a href="https://github.com/rgthree/rgthree-comfy">rgthree Image Comparer</a>.</p>
+      <p><strong>Built with:</strong> Svelte 5, Vite, TypeScript. Client-only. Cloudflare Workers.</p>
+      <p class="meta">First published 24 Aug 2026. All rights reserved. <a href="/image-compare-workbench.md">md</a> · <a href="/image-compare-workbench.json">json</a></p>
+    </article>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

@@ -1,167 +1,80 @@
 # Image Compare Workbench
 
-Client-side tool for inspecting **any pair of images from a larger set** while keeping a shared pan/zoom/wipe view.
-
-The image set is the primary object. Side A and side B are temporary selections from that set. Changing A or B never moves the camera or wipe — so you can zoom into a feature, then cycle related frames without losing your place.
+Drop a folder of images. Click a reference on one rail, click candidates on the other. The camera stays put.
 
 **Canonical:** https://contraptions.bookofsarth.com/image-compare-workbench
 **Live:** https://image-compare-workbench.marshy-runner.workers.dev
 **Shelf:** https://contraptions.bookofsarth.com
 **Source:** https://github.com/whiddershins/image-compare-workbench
 **Sarth:** https://sarth.net
-**Tech:** [TECH.md](./TECH.md)
+**Tech:** [TECH.md](./TECH.md) · **Design:** [DESIGN.md](./DESIGN.md)
 
-Hosted on Cloudflare Workers.
+Hosted on Cloudflare Workers. Images never leave the browser.
 
-The A-folder vs B-folder split is artificial. See [DESIGN.md](./DESIGN.md).
+## How to use
+
+Drop a folder, or pick files. One shared pool fills both rails.
+
+Click a thumb on the A rail, click a thumb on the B rail. Pan, zoom, wipe. Click another candidate. The view does not reset.
+
+If a thumb is already A, it shows muted on B (and the other way around). Click the muted thumb to swap. `S` swaps too.
+
+**Wipe**: drag the divider, or drag the image under a held divider (hybrid). `V` / `H` for vertical or horizontal. Wipe can lock to the screen, lock to the image, or hybrid.
+
+**Full A/B**: one side fills the view. Tap or hold to flip. **A|B** is side by side, same camera.
+
+**Size**: two dials. Which dimension to equalize (height, width, max edge, min edge, native pixels). Who owns the size (both/max, lock A, lock B). Height + lock A is “match A.”
+
+Keyboard: `A` / `B` pick a side, arrows cycle, `F` fit, `0` actual size, `-` / `=` zoom, space-drag pan, `?` shortcuts.
+
+Folder import uses Chromium directory APIs when they exist. Multi-file pick always works. JPEG, PNG, WebP, GIF, AVIF. Not SVG, HEIC, RAW, EXR, PDF, or video.
+
+## What it is
+
+The image set is the object. A and B are two picks from that set, not two folders.
+
+Two click-rails over one pool, so both sides of the comparison are one click away. Not a modifier-click, not a dropdown, not `Ctrl+1-9`.
+
+One shared pan/zoom/wipe. Change A or B and you stay on the feature you were looking at.
+
+Wipe anchoring is a choice: screen, image, or hybrid (drag pans under a held wipe; the wheel carries the wipe with the image).
+
+Size matching is two dials, so a 1024 gen overlays a 4K upscale the way you mean it.
+
+Used at Third Wall Studio. The A-folder vs B-folder split is not a missing feature. See [DESIGN.md](./DESIGN.md).
+
+## Why
+
+I wanted the whole loop in one place: folder in, reference on one rail, candidates on the other, stay where you are. Camera never resets. Wipe never jumps. Nothing uploaded.
+
+The two-file slider is a solved widget. This is a workbench for a *set*.
+
+## Context
+
+The wipe slider is an old friend of the web: [JuxtaposeJS](https://juxtapose.knightlab.com/), [TwentyTwenty](https://zurb.com/playground/twentytwenty), [img-comparison-slider](https://www.npmjs.com/package/img-comparison-slider), and a lot of WordPress before/after plugins.
+
+Render and research viewers that pick two from a list and hold the camera: [tev](https://github.com/Tom94/tev), [HDRView](https://github.com/wkjarosz/hdrview).
+
+Upscaling: [img-ab](https://github.com/the-database/img-ab), [Simple Image Compare](https://github.com/Sirosky/Simple-Image-Compare).
+
+Photographers: [Lightroom Classic](https://helpx.adobe.com/lightroom-classic/help/browse-compare-photos.html), [digiKam Light Table](https://docs.digikam.org/en/light_table/lighttable_operation.html), [Capture One](https://support.captureone.com/hc/en-us/articles/360002481017), [Photo Mechanic](http://wiki.camerabits.com/en/index.php/Preview_Window), [FastRawViewer](https://www.fastrawviewer.com/), [XnView MP](https://www.xnview.com/en/xnviewmp/), [FastStone](https://www.faststone.org/).
+
+Pro diff: [Kaleidoscope](https://kaleidoscope.app/), [Beyond Compare](https://www.scootersoftware.com/), [Diffchecker](https://www.diffchecker.com/image-compare/).
+
+Frames and gens: [Slow.pics](https://slow.pics/), [vs-preview](https://github.com/Jaded-Encoding-Thaumaturgy/vs-preview), [NVIDIA ICAT](https://www.nvidia.com/en-us/geforce/technologies/icat/), [InvokeAI](https://github.com/invoke-ai/InvokeAI), [rgthree Image Comparer](https://github.com/rgthree/rgthree-comfy), [TwinLens](https://twinlens.app/), [JERI](https://github.com/disneyresearch/jeri).
 
 ## Privacy
 
-**Images stay in your browser. Nothing is uploaded.**
-
-Import uses local `File` objects and object URLs only. There are no accounts, analytics, remote fonts, or network calls after the static app loads.
+Images stay in the browser. Local `File` objects and object URLs. No accounts, no analytics, no upload.
 
 ## Local development
 
-```bash
-npm install
-npm run dev
-```
-
-Requires Node.js 22.12+ on the Node 22 line, or Node.js 24+ (see `.nvmrc`).
-
-## Validation
-
-```bash
-npm run verify
-npm run test:e2e
-```
-
-`verify` runs type checks, unit tests, the production build, and a Wrangler dry run.
-
-## Production preview
-
-```bash
-npm run build
-npm run preview
-```
-
-## Deployment (Cloudflare Workers)
-
-**Live:** [image-compare-workbench.marshy-runner.workers.dev](https://image-compare-workbench.marshy-runner.workers.dev)
-
-Production is a persistent, assets-only Worker owned by the maintainer's personal Cloudflare
-account. Vite builds `dist/`; Wrangler deploys it with SPA fallback. No server-side handler,
-binding, account secret, Durable Object, or image upload path is present yet.
-
-```bash
-# Validate the production build and Worker bundle without deploying.
-npm run deploy:check
-
-# Authenticate this machine when a manual production update is needed.
-npx wrangler login
-npm run deploy
-```
-
-For a git-connected Workers Build, use the repository root with build command `npm run verify` and
-deploy command `npx wrangler deploy`. The checked-in `wrangler.jsonc` is the source of truth.
-
-Use `npm run preview:cloudflare` when you want Wrangler's local serving behavior; ordinary UI work
-can continue to use the faster `npm run dev` loop.
-
-The persistent deployment can later host an API or Durable Object bridge by adding a Worker entry
-point and routing only `/api/*` through it, while static assets remain asset-first.
-
-## Browser behavior
-
-| Capability | Notes |
-|------------|--------|
-| Multi-file import | Supported via file picker and drag-and-drop |
-| Folder picker | Progressive enhancement (`showDirectoryPicker` or `webkitdirectory`) |
-| Folder drag | Progressive enhancement via webkit directory entries |
-| Formats | JPEG, PNG, WebP, GIF, AVIF (when the browser decodes it) |
-| Unsupported | SVG, HEIC, RAW, EXR, PDF, video |
-| Animation | Animated GIF/WebP may play in the viewport; phases are not synchronized |
-| Architecture | Local object URLs + thumbnail blobs; domain state holds metadata only |
-
-Folder import was designed for Chromium-style directory APIs. Ordinary multi-file import remains the reliable baseline when directory APIs are unavailable.
+Node 22.12+ or Node 24 (see `.nvmrc`). Install with the usual Node tools, then the dev script. The verify script covers types, unit tests, production build, and a Wrangler dry run. `wrangler.jsonc` is the source of truth. Assets-only Worker. No Durable Object, no image upload path.
 
 ## Architecture
 
-- **Functional domain core** — pure TypeScript for workspace transitions, camera math, sorting, wipe, and import policy. No DOM, File, or Svelte imports.
-- **Effectful browser shell** — file enumeration, decode, thumbnails, object URL registry, application controller.
-- **Serializable workspace** — asset metadata, selection, camera, comparison only.
-- **Resource registry** — maps asset IDs to `File` + original/thumbnail object URLs with deterministic dispose.
-- **Shared world camera** — one world unit = one source pixel; images centered at origin; one transform applied to both sides.
-- **Latest-selection-wins** — per-side request tokens ignore stale decode completions during rapid cycling.
-
-## Size normalization
-
-Two **orthogonal** toolbar controls (aspect always preserved; not full registration):
-
-**Basis** — what to equalize:
-
-| Basis | Behavior |
-|-------|----------|
-| Native px | 1 world unit = 1 source pixel (reference ignored) |
-| Height / Width / Max edge / Min edge | Equalize that dimension in world space |
-
-**Reference** — who owns the target size:
-
-| Reference | Behavior |
-|-----------|----------|
-| Both (max) | Both sides scale to the larger of A and B |
-| Lock A | A stays native; B scales to A |
-| Lock B | B stays native; A scales to B |
-
-Example: **Height + Lock A** = old “Match A”. **Height + Both (max)** = old “Equal height”.
-
-## Rails
-
-If an image is selected as A, it appears **muted on the B rail** (and vice versa). Click the muted thumb to **swap A↔B**. Toolbar **⇄ Swap** / key `S` still available.
-
-## View mode
-
-Two orthogonal sticky axes:
-
-| Axis | Values | Notes |
-|------|--------|--------|
-| **presentation** | Wipe \| Full \| A\|B | Mutually exclusive |
-| **focus** | A \| B | Which full side is “home”; drives side-tap |
-
-| Control | Behavior |
-|---------|----------|
-| **Full A/B** | Enter Full (keeps focus). Re-press flips focus A↔B. |
-| **Wipe** | Presentation only — **does not change focus or A/B tap**. |
-| **A\|B** | Side-by-side with shared pan/zoom. Does not change focus or A/B tap. |
-| **B tap** / **A tap** | Hold: show opposite of focus. Label depends on focus only. |
-
-Hold **V** or the tap button. Same camera; wipe geometry unchanged.
-
-## Wipe axis & behavior
-
-| Control | Option | Behavior |
-|---------|--------|----------|
-| **V / H** | Vertical (default) / Horizontal | V: A left, B right. H: A above, B below. 0 = all B, 1 = all A |
-| Wipe behavior | **Hybrid** (default) | Drag moves images beneath a fixed divider; two-finger/wheel pan carries the divider with the image; zoom keeps its image coordinate |
-| | **Image locked** | Divider tracks its world position through pan and zoom |
-| | **Screen locked** | Divider stays fixed in the viewport through pan and zoom |
-
-Original v0 was vertical + screen-fixed only.
-
-## Keyboard
-
-| Key | Action |
-|-----|--------|
-| `A` / `B` | Activate side |
-| `↑` / `↓` | Cycle active side |
-| `S` | Swap |
-| `F` | Fit |
-| `0` | Actual size (1:1 / 100%) |
-| `-` / `=` | Zoom out / in |
-| `Space` + drag | Pan |
-| `?` | Shortcuts |
+Functional domain core: TypeScript for workspace, camera, sorting, wipe, import policy. No DOM, File, or Svelte. Browser shell: files, decode, thumbnails, object URLs. Shared world camera: one world unit is one source pixel, one transform on both sides. Latest-selection-wins: stale decode completions are ignored while you cycle.
 
 ## License
 
-No license has been selected yet. All rights reserved unless otherwise stated.
+All rights reserved.

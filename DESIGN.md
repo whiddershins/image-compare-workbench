@@ -13,3 +13,5 @@ Related: [README.md](./README.md)
 Canonical: https://contraptions.bookofsarth.com/image-compare-workbench
 Live: https://image-compare-workbench.marshy-runner.workers.dev
 Shelf: https://contraptions.bookofsarth.com
+
+A rated folder of gens, pairwise, is the job. JS-rendered paintings are gens in that folder. Same pool, two pickers. Do not split refs vs gens.
