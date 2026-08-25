@@ -16,21 +16,56 @@
   "dateModified": "2026-08-24",
   "privacy": "Images stay in the browser. No accounts, no analytics, no upload.",
   "hosting": "Cloudflare Workers",
-  "builtWith": ["Svelte 5", "Vite", "TypeScript", "Cloudflare Workers"],
+  "builtWith": [
+    "Svelte 5",
+    "Vite",
+    "TypeScript",
+    "Cloudflare Workers"
+  ],
   "edges": [
-    {"type": "partOf", "name": "Contraptions", "url": "https://contraptions.bookofsarth.com/"},
-    {"type": "relatedTo", "name": "Burlap", "url": "https://burlap.app", "note": "Visual reference prompting. The studio loop this workbench sits in."},
-    {"type": "relatedTo", "name": "Third Wall Studio", "url": "https://thirdwallstudio.com", "note": "Where Image Compare Workbench is used."},
-    {"type": "source", "name": "whiddershins/image-compare-workbench", "url": "https://github.com/whiddershins/image-compare-workbench"},
-    {"type": "priorArt", "name": "JuxtaposeJS", "url": "https://juxtapose.knightlab.com/", "note": "Web wipe slider."},
-    {"type": "priorArt", "name": "TwentyTwenty", "url": "https://zurb.com/playground/twentytwenty", "note": "Web wipe slider."},
-    {"type": "priorArt", "name": "tev", "url": "https://github.com/Tom94/tev", "note": "Pick two from a list and hold the camera."},
-    {"type": "priorArt", "name": "HDRView", "url": "https://github.com/wkjarosz/hdrview", "note": "Pick two from a list and hold the camera."},
-    {"type": "priorArt", "name": "img-ab", "url": "https://github.com/the-database/img-ab", "note": "Upscale compare."},
-    {"type": "priorArt", "name": "Lightroom Classic", "url": "https://helpx.adobe.com/lightroom-classic/help/browse-compare-photos.html", "note": "Photographer compare."},
-    {"type": "priorArt", "name": "Slow.pics", "url": "https://slow.pics/", "note": "Frame and gen compare."},
-    {"type": "priorArt", "name": "NVIDIA ICAT", "url": "https://www.nvidia.com/en-us/geforce/technologies/icat/", "note": "Frame and gen compare."},
-    {"type": "builtWith", "name": "Svelte", "url": "https://svelte.dev"},
-    {"type": "builtWith", "name": "Cloudflare Workers", "url": "https://workers.cloudflare.com"}
+    {
+      "type": "partOf",
+      "name": "Contraptions",
+      "url": "https://contraptions.bookofsarth.com/"
+    },
+    {
+      "type": "relatedTo",
+      "name": "Burlap",
+      "url": "https://burlap.app",
+      "note": "Visual reference prompting. The studio loop this workbench sits in."
+    },
+    {
+      "type": "relatedTo",
+      "name": "Third Wall Studio",
+      "url": "https://thirdwallstudio.com",
+      "note": "Where Image Compare Workbench is used."
+    },
+    {
+      "type": "source",
+      "name": "whiddershins/image-compare-workbench",
+      "url": "https://github.com/whiddershins/image-compare-workbench"
+    },
+    {
+      "type": "priorArt",
+      "name": "imgsli",
+      "url": "https://imgsli.com/",
+      "note": "Web album with a slider. You pick from a set. It uploads."
+    },
+    {
+      "type": "priorArt",
+      "name": "Improve ImgSLI",
+      "url": "https://github.com/Loganavter/Improve-ImgSLI",
+      "note": "Selectable lists on both sides of a shared compare. Arbitrary pairs already exist there."
+    },
+    {
+      "type": "builtWith",
+      "name": "Svelte",
+      "url": "https://svelte.dev"
+    },
+    {
+      "type": "builtWith",
+      "name": "Cloudflare Workers",
+      "url": "https://workers.cloudflare.com"
+    }
   ]
 }

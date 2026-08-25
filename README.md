@@ -51,17 +51,13 @@ The two-file slider is a solved widget. This is a workbench for a *set*.
 
 ## Context
 
-The wipe slider is an old friend of the web: [JuxtaposeJS](https://juxtapose.knightlab.com/), [TwentyTwenty](https://zurb.com/playground/twentytwenty), [img-comparison-slider](https://www.npmjs.com/package/img-comparison-slider), and a lot of WordPress before/after plugins.
+The two products I sat with are [imgsli](https://imgsli.com/) and [Improve ImgSLI](https://github.com/Loganavter/Improve-ImgSLI).
 
-Render and research viewers that pick two from a list and hold the camera: [tev](https://github.com/Tom94/tev), [HDRView](https://github.com/wkjarosz/hdrview).
+imgsli is a web album with a slider. You pick from a set. It uploads.
 
-Upscaling: [img-ab](https://github.com/the-database/img-ab), [Simple Image Compare](https://github.com/Sirosky/Simple-Image-Compare).
+Improve ImgSLI puts selectable lists on both sides of a shared compare. Arbitrary pairs already exist there.
 
-Photographers: [Lightroom Classic](https://helpx.adobe.com/lightroom-classic/help/browse-compare-photos.html), [digiKam Light Table](https://docs.digikam.org/en/light_table/lighttable_operation.html), [Capture One](https://support.captureone.com/hc/en-us/articles/360002481017), [Photo Mechanic](http://wiki.camerabits.com/en/index.php/Preview_Window), [FastRawViewer](https://www.fastrawviewer.com/), [XnView MP](https://www.xnview.com/en/xnviewmp/), [FastStone](https://www.faststone.org/).
-
-Pro diff: [Kaleidoscope](https://kaleidoscope.app/), [Beyond Compare](https://www.scootersoftware.com/), [Diffchecker](https://www.diffchecker.com/image-compare/).
-
-Frames and gens: [Slow.pics](https://slow.pics/), [vs-preview](https://github.com/Jaded-Encoding-Thaumaturgy/vs-preview), [NVIDIA ICAT](https://www.nvidia.com/en-us/geforce/technologies/icat/), [InvokeAI](https://github.com/invoke-ai/InvokeAI), [rgthree Image Comparer](https://github.com/rgthree/rgthree-comfy), [TwinLens](https://twinlens.app/), [JERI](https://github.com/disneyresearch/jeri).
+This workbench is that browsing model as the whole instrument: one local pool, two independent click-rails, camera stays, nothing uploaded. Part of [Contraptions](https://contraptions.bookofsarth.com/). Related: [Burlap](https://burlap.app), used at [Third Wall Studio](https://thirdwallstudio.com).
 
 ## Privacy
 
